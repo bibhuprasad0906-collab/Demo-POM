@@ -1,1 +1,1 @@
-"""\nPages package initialization.\n"""\n
+"""\nPage objects package initialization.\n"""\n
