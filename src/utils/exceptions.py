@@ -1,0 +1,1 @@
+"""\nCustom exceptions for UI operations.\n"""\n\nclass ElementNotFoundError(Exception):\n    \"\"\"Raised when a UI element is not found.\"\"\"\n    pass\n\nclass LoginFailedError(Exception):\n    \"\"\"Raised when login fails due to invalid credentials or lockout.\"\"\"\n    pass\n
