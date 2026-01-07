@@ -1,1 +1,1 @@
-"""\nPage objects package initialization.\n"""\n
+# src.pages package initialization
