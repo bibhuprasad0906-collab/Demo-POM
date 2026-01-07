@@ -1,1 +1,12 @@
-"""\nConfig: Loads configuration from environment variables.\nSupports baseUrl, browser, headless, timeouts.\n"""\n\nimport os\n\nclass Config:\n    BASE_URL = os.environ.get("BASE_URL", "https://app-under-test.example.com")\n    BROWSER = os.environ.get("BROWSER", "chrome")\n    HEADLESS = os.environ.get("HEADLESS", "true").lower() == "true"\n    TIMEOUT = int(os.environ.get("TIMEOUT", "10"))\n
+"""
+Config: Loads configuration from environment variables.
+Provides baseUrl, browser, headless, and timeouts.
+"""
+
+import os
+
+class Config:
+    BASE_URL = os.environ.get("BASE_URL", "http://localhost:8080")
+    BROWSER = os.environ.get("BROWSER", "chrome")
+    HEADLESS = os.environ.get("HEADLESS", "true").lower() == "true"
+    TIMEOUT = int(os.environ.get("TIMEOUT", "10"))
