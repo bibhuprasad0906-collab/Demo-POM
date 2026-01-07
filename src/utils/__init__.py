@@ -1,1 +1,1 @@
-"""\nUtils package initialization.\n"""\n
+"""\nUtilities package initialization.\n"""\n
