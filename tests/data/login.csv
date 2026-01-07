@@ -1,1 +1,9 @@
-username,password,expected,platform\nvalid_user_web,valid_pass,success,web\nvalid_user_mobile,valid_pass,success,mobile\ninvalid_user_web,invalid_pass,fail,web\ninvalid_user_mobile,invalid_pass,fail,mobile\nlocked_user_web,any_pass,lockout,web\nlocked_user_mobile,any_pass,lockout,mobile\naudit_user,audit_pass,success,web\n
+username,password,expected,platform,story
+validWebUser,validWebPass,success,web,AUTH-001
+validMobileUser,validMobilePass,success,mobile,AUTH-002
+invalidWebUser,invalidWebPass,fail,web,AUTH-003
+invalidMobileUser,invalidMobilePass,fail,mobile,AUTH-004
+lockoutWebUser,wrongPass,locked,web,AUTH-005
+lockoutMobileUser,wrongPass,locked,mobile,AUTH-006
+lockedWebUser,anyPass,locked,web,AUTH-007
+lockedMobileUser,anyPass,locked,mobile,AUTH-008
