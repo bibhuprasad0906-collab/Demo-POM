@@ -1,1 +1,30 @@
-"""\nDriverFactory: Instantiates Selenium WebDriver for Chrome/Firefox.\nSupports headless mode and implicit waits.\n"""\n\nfrom selenium import webdriver\nfrom selenium.webdriver.chrome.options import Options as ChromeOptions\nfrom selenium.webdriver.firefox.options import Options as FirefoxOptions\nfrom src.utils.config import Config\n\ndef get_driver():\n    if Config.BROWSER == "chrome":\n        options = ChromeOptions()\n        if Config.HEADLESS:\n            options.add_argument("--headless")\n            options.add_argument("--disable-gpu")\n        driver = webdriver.Chrome(options=options)\n    elif Config.BROWSER == "firefox":\n        options = FirefoxOptions()\n        if Config.HEADLESS:\n            options.add_argument("--headless")\n        driver = webdriver.Firefox(options=options)\n    else:\n        raise ValueError(f"Unsupported browser: {Config.BROWSER}")\n    driver.implicitly_wait(Config.TIMEOUT)\n    driver.set_page_load_timeout(Config.TIMEOUT)\n    return driver\n
+"""
+DriverFactory: Instantiates Selenium WebDriver for Chrome/Firefox.
+Supports headless mode and implicit waits.
+"""
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from src.utils.config import Config
+
+def get_driver():
+    """
+    Returns a Selenium WebDriver instance based on config.
+    """
+    if Config.BROWSER == "chrome":
+        options = ChromeOptions()
+        if Config.HEADLESS:
+            options.add_argument("--headless")
+            options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
+        driver = webdriver.Chrome(options=options)
+    elif Config.BROWSER == "firefox":
+        options = FirefoxOptions()
+        if Config.HEADLESS:
+            options.add_argument("--headless")
+        driver = webdriver.Firefox(options=options)
+    else:
+        raise ValueError(f"Unsupported browser: {Config.BROWSER}")
+    driver.implicitly_wait(Config.TIMEOUT)
+    return driver
