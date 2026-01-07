@@ -1,1 +1,1 @@
-"""\nTests package initialization.\n"""\n
+# tests package initialization
