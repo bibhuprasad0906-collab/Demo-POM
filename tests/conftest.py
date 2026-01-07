@@ -1,1 +1,49 @@
-"""\nPytest fixtures for driver and data.\nIncludes CSV loader and pytest_generate_tests for parametrization.\n"""\n\nimport pytest\nimport csv\nimport os\nfrom src.utils.driver_factory import get_driver\nfrom src.utils.config import Config\n\n@pytest.fixture(scope="session")\ndef driver():\n    driver = get_driver()\n    driver.get(Config.BASE_URL)\n    yield driver\n    driver.quit()\n\n@pytest.fixture(scope="session")\ndef login_data():\n    data = []\n    csv_path = os.path.join(os.path.dirname(__file__), "data", "login.csv")\n    with open(csv_path, newline='') as csvfile:\n        reader = csv.DictReader(csvfile)\n        for row in reader:\n            data.append(row)\n    return data\n\ndef pytest_generate_tests(metafunc):\n    if "login_row" in metafunc.fixturenames:\n        csv_path = os.path.join(os.path.dirname(__file__), "data", "login.csv")\n        with open(csv_path, newline='') as csvfile:\n            reader = csv.DictReader(csvfile)\n            rows = [row for row in reader]\n        metafunc.parametrize("login_row", rows)\n
+"""
+Pytest fixtures for driver and data.
+Includes CSV loader and pytest_generate_tests for parametrization.
+"""
+
+import pytest
+import csv
+from src.utils.driver_factory import get_driver
+from src.utils.config import Config
+
+@pytest.fixture(scope="session")
+def driver():
+    """
+    Fixture to initialize and quit WebDriver.
+    """
+    drv = get_driver()
+    yield drv
+    drv.quit()
+
+@pytest.fixture(scope="session")
+def base_url():
+    """
+    Fixture to provide base URL.
+    """
+    return Config.BASE_URL
+
+@pytest.fixture(scope="session")
+def login_data():
+    """
+    Loads login test data from CSV.
+    """
+    data = []
+    with open("tests/data/login.csv", newline="") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            data.append(row)
+    return data
+
+def pytest_generate_tests(metafunc):
+    """
+    Parametrize tests using login_data fixture.
+    """
+    if "login_record" in metafunc.fixturenames:
+        data = []
+        with open("tests/data/login.csv", newline="") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                data.append(row)
+        metafunc.parametrize("login_record", data)
