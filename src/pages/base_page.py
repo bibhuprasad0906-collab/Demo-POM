@@ -1,1 +1,77 @@
-"""\nBasePage: Abstract base class for all page objects.\nProvides safe Selenium wrappers and robust error handling.\n"""\n\nfrom selenium.webdriver.support.ui import WebDriverWait\nfrom selenium.webdriver.support import expected_conditions as EC\nfrom src.utils.exceptions import ElementNotFoundError\nimport logging\n\nclass BasePage:\n    def __init__(self, driver, timeout=10):\n        """\n        Initialize BasePage with driver and default timeout.\n        """\n        self.driver = driver\n        self.timeout = timeout\n        self.logger = logging.getLogger(self.__class__.__name__)\n\n    def find_element(self, locator):\n        """\n        Safely find element by locator.\n        Raises ElementNotFoundError if not found.\n        """\n        try:\n            return WebDriverWait(self.driver, self.timeout).until(\n                EC.presence_of_element_located(locator)\n            )\n        except Exception as e:\n            self.logger.error(f"Element not found: {locator} - {str(e)}")\n            raise ElementNotFoundError(f"Element not found: {locator}")\n\n    def click(self, locator):\n        """\n        Safely click element.\n        """\n        try:\n            element = self.find_element(locator)\n            element.click()\n        except Exception as e:\n            self.logger.error(f"Click failed for {locator}: {str(e)}")\n            raise\n\n    def send_keys(self, locator, keys):\n        """\n        Safely send keys to element.\n        """\n        try:\n            element = self.find_element(locator)\n            element.clear()\n            element.send_keys(keys)\n        except Exception as e:\n            self.logger.error(f"Send keys failed for {locator}: {str(e)}")\n            raise\n\n    def is_visible(self, locator):\n        """\n        Check if element is visible.\n        """\n        try:\n            element = WebDriverWait(self.driver, self.timeout).until(\n                EC.visibility_of_element_located(locator)\n            )\n            return element.is_displayed()\n        except Exception as e:\n            self.logger.warning(f"Visibility check failed for {locator}: {str(e)}")\n            return False\n
+"""
+BasePage: Abstract base class for all page objects.
+Provides safe Selenium wrappers and robust error handling.
+"""
+
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from src.utils.exceptions import ElementNotFoundError
+import logging
+
+class BasePage:
+    def __init__(self, driver, timeout=10):
+        """
+        Initialize BasePage with driver and default timeout.
+        """
+        self.driver = driver
+        self.timeout = timeout
+
+    def find_element(self, locator):
+        """
+        Safely find a single element.
+        Raises ElementNotFoundError if not found.
+        """
+        try:
+            return WebDriverWait(self.driver, self.timeout).until(
+                EC.presence_of_element_located(locator)
+            )
+        except Exception as e:
+            logging.error(f"Element not found: {locator} - {str(e)}")
+            raise ElementNotFoundError(f"Element not found: {locator}")
+
+    def click(self, locator):
+        """
+        Safely click an element.
+        """
+        try:
+            element = self.find_element(locator)
+            element.click()
+        except Exception as e:
+            logging.error(f"Failed to click element: {locator} - {str(e)}")
+            raise ElementNotFoundError(f"Failed to click element: {locator}")
+
+    def send_keys(self, locator, value):
+        """
+        Safely send keys to an element.
+        """
+        try:
+            element = self.find_element(locator)
+            element.clear()
+            element.send_keys(value)
+        except Exception as e:
+            logging.error(f"Failed to send keys to element: {locator} - {str(e)}")
+            raise ElementNotFoundError(f"Failed to send keys to element: {locator}")
+
+    def is_visible(self, locator):
+        """
+        Check if element is visible.
+        """
+        try:
+            element = WebDriverWait(self.driver, self.timeout).until(
+                EC.visibility_of_element_located(locator)
+            )
+            return element.is_displayed()
+        except Exception as e:
+            logging.error(f"Element not visible: {locator} - {str(e)}")
+            return False
+
+    def get_text(self, locator):
+        """
+        Get text from an element.
+        """
+        try:
+            element = self.find_element(locator)
+            return element.text
+        except Exception as e:
+            logging.error(f"Failed to get text from element: {locator} - {str(e)}")
+            raise ElementNotFoundError(f"Failed to get text from element: {locator}")
