@@ -1,1 +1,2 @@
-selenium>=4.0.0\npytest>=7.0.0\npytest-html>=3.1.0\n
+selenium>=4.10.0
+pytest>=7.0.0
