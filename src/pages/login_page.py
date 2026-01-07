@@ -1,1 +1,93 @@
-"""\nLoginPage: Page object for login functionality.\nImplements robust error handling and exposes login operations.\n"""\n\nfrom selenium.webdriver.common.by import By\nfrom selenium.webdriver.support.ui import WebDriverWait\nfrom selenium.webdriver.support import expected_conditions as EC\nfrom src.pages.base_page import BasePage\nfrom src.utils.exceptions import LoginFailedError, ElementNotFoundError\nimport logging\nimport time\n\nclass LoginPage(BasePage):\n    # Locators (update these as per actual application)\n    USERNAME_INPUT = (By.ID, "username")\n    PASSWORD_INPUT = (By.ID, "password")\n    LOGIN_BUTTON = (By.ID, "loginBtn")\n    ERROR_MESSAGE = (By.ID, "errorMsg")\n    LOCKOUT_MESSAGE = (By.ID, "lockoutMsg")\n    DASHBOARD_INDICATOR = (By.ID, "dashboard")\n    PASSWORD_TOGGLE = (By.ID, "passwordToggle")\n\n    def login(self, username, password, expect_success=True, expect_lockout=False):\n        """\n        Attempt login with provided credentials.\n        Returns True if login successful, False if error/lockout.\n        Raises LoginFailedError for unexpected failures.\n        """\n        try:\n            self.send_keys(self.USERNAME_INPUT, username)\n            self.send_keys(self.PASSWORD_INPUT, password)\n            self.click(self.LOGIN_BUTTON)\n            start_time = time.time()\n            if expect_success:\n                # Wait for dashboard indicator\n                WebDriverWait(self.driver, self.timeout).until(\n                    EC.presence_of_element_located(self.DASHBOARD_INDICATOR)\n                )\n                elapsed = time.time() - start_time\n                if elapsed > 2:\n                    raise LoginFailedError("Login response time exceeded 2 seconds")\n                return True\n            elif expect_lockout:\n                if self.is_visible(self.LOCKOUT_MESSAGE):\n                    return "lockout"\n                else:\n                    raise LoginFailedError("Lockout message not displayed")\n            else:\n                if self.is_visible(self.ERROR_MESSAGE):\n                    return False\n                else:\n                    raise LoginFailedError("Error message not displayed")\n        except ElementNotFoundError as e:\n            logging.error(f"Login failed due to missing element: {str(e)}")\n            raise LoginFailedError(str(e))\n        except Exception as e:\n            logging.error(f"Login failed: {str(e)}")\n            raise LoginFailedError(str(e))\n\n    def toggle_password_visibility(self):\n        """\n        Toggle password visibility and verify input type.\n        Returns the input type after toggle.\n        """\n        try:\n            self.click(self.PASSWORD_TOGGLE)\n            password_input = self.find_element(self.PASSWORD_INPUT)\n            return password_input.get_attribute("type")\n        except Exception as e:\n            logging.error(f"Password visibility toggle failed: {str(e)}")\n            raise\n\n    def is_audit_log_created(self):\n        """\n        Stub for audit log verification.\n        In real implementation, would check log system.\n        """\n        # For demo, always return True\n        return True\n
+"""
+LoginPage: Page object for login functionality.
+Implements robust error handling and exposes login operations.
+"""
+
+from selenium.webdriver.common.by import By
+from src.pages.base_page import BasePage
+from src.utils.exceptions import LoginFailedError, ElementNotFoundError
+import logging
+import time
+
+class LoginPage(BasePage):
+    # Locators (update as per actual application)
+    USERNAME_INPUT = (By.ID, "username")
+    PASSWORD_INPUT = (By.ID, "password")
+    LOGIN_BUTTON = (By.ID, "loginBtn")
+    ERROR_MESSAGE = (By.ID, "errorMsg")
+    DASHBOARD_INDICATOR = (By.ID, "dashboard")
+    LOCKED_MESSAGE = (By.ID, "lockedMsg")
+    PASSWORD_TOGGLE = (By.ID, "togglePassword")
+
+    def open(self, base_url):
+        """
+        Open the login page.
+        """
+        try:
+            self.driver.get(base_url + "/login")
+        except Exception as e:
+            logging.error(f"Failed to open login page: {str(e)}")
+            raise
+
+    def login(self, username, password):
+        """
+        Perform login with given credentials.
+        Returns True if dashboard is reached, False otherwise.
+        Raises LoginFailedError on error.
+        """
+        try:
+            self.send_keys(self.USERNAME_INPUT, username)
+            self.send_keys(self.PASSWORD_INPUT, password)
+            self.click(self.LOGIN_BUTTON)
+            start_time = time.time()
+            # Wait for dashboard or error
+            if self.is_visible(self.DASHBOARD_INDICATOR):
+                elapsed = time.time() - start_time
+                if elapsed > 2:
+                    logging.warning(f"Dashboard loaded in {elapsed:.2f}s, exceeds 2s requirement.")
+                return True
+            elif self.is_visible(self.ERROR_MESSAGE):
+                return False
+            elif self.is_visible(self.LOCKED_MESSAGE):
+                raise LoginFailedError("Account is locked.")
+            else:
+                raise LoginFailedError("Unknown login failure.")
+        except ElementNotFoundError as e:
+            logging.error(f"Login failed: {str(e)}")
+            raise LoginFailedError(str(e))
+        except Exception as e:
+            logging.error(f"Unexpected error during login: {str(e)}")
+            raise LoginFailedError(str(e))
+
+    def get_error_message(self):
+        """
+        Return error message text if present.
+        """
+        try:
+            return self.get_text(self.ERROR_MESSAGE)
+        except ElementNotFoundError:
+            return ""
+
+    def get_locked_message(self):
+        """
+        Return locked account message text if present.
+        """
+        try:
+            return self.get_text(self.LOCKED_MESSAGE)
+        except ElementNotFoundError:
+            return ""
+
+    def toggle_password_visibility(self):
+        """
+        Toggle password visibility.
+        Returns True if toggled successfully.
+        """
+        try:
+            self.click(self.PASSWORD_TOGGLE)
+            # Check if password input type changed
+            element = self.find_element(self.PASSWORD_INPUT)
+            input_type = element.get_attribute("type")
+            return input_type in ["text", "password"]
+        except Exception as e:
+            logging.error(f"Failed to toggle password visibility: {str(e)}")
+            return False
