@@ -1,1 +1,13 @@
-{\n  "AUTH-001": ["test_AUTH_001_login_valid_web"],\n  "AUTH-002": ["test_AUTH_002_login_valid_mobile"],\n  "AUTH-003": ["test_AUTH_003_login_invalid_web"],\n  "AUTH-004": ["test_AUTH_004_login_invalid_mobile"],\n  "AUTH-005": ["test_AUTH_005_lockout_web"],\n  "AUTH-006": ["test_AUTH_006_lockout_mobile"],\n  "AUTH-007": ["test_AUTH_007_locked_user_web"],\n  "AUTH-008": ["test_AUTH_008_locked_user_mobile"],\n  "AUTH-009": ["test_AUTH_009_password_toggle_web"],\n  "AUTH-010": ["test_AUTH_010_password_toggle_mobile"],\n  "AUTH-011": ["test_AUTH_011_audit_log"]\n}\n
+{
+  "AUTH-001": ["test_AUTH_001_login_valid_web"],
+  "AUTH-002": ["test_AUTH_002_login_valid_mobile"],
+  "AUTH-003": ["test_AUTH_003_login_invalid_web"],
+  "AUTH-004": ["test_AUTH_004_login_invalid_mobile"],
+  "AUTH-005": ["test_AUTH_005_account_lockout_web"],
+  "AUTH-006": ["test_AUTH_006_account_lockout_mobile"],
+  "AUTH-007": ["test_AUTH_007_locked_account_notification_web"],
+  "AUTH-008": ["test_AUTH_008_locked_account_notification_mobile"],
+  "AUTH-009": ["test_AUTH_009_password_visibility_toggle_web"],
+  "AUTH-010": ["test_AUTH_010_password_visibility_toggle_mobile"],
+  "AUTH-011": ["test_AUTH_011_audit_login_attempts"]
+}
