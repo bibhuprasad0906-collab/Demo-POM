@@ -10,20 +10,31 @@ from src.utils.config import Config
 
 @pytest.fixture(scope="session")
 def driver():
-    """
-    Session-scoped Selenium WebDriver fixture.
-    """
     drv = get_driver()
     drv.get(Config.BASE_URL)
     yield drv
     drv.quit()
 
+@pytest.fixture(scope="session")
+def login_data():
+    """
+    Loads login test data from CSV.
+    """
+    data = []
+    with open("tests/data/login.csv", newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            data.append(row)
+    return data
+
 def pytest_generate_tests(metafunc):
     """
-    Parametrize tests from CSV data.
+    Parametrize tests using login_data fixture.
     """
-    if "login_data" in metafunc.fixturenames:
+    if "login_case" in metafunc.fixturenames:
+        data = []
         with open("tests/data/login.csv", newline='') as csvfile:
             reader = csv.DictReader(csvfile)
-            data = [row for row in reader]
-        metafunc.parametrize("login_data", data)
+            for row in reader:
+                data.append(row)
+        metafunc.parametrize("login_case", data)
