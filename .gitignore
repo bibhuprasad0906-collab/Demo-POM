@@ -29,7 +29,7 @@ ENV/
 env/
 .venv
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
@@ -37,27 +37,35 @@ env/
 *~
 .DS_Store
 
-# Pytest
+# Testing
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
 .nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Logs
+logs/
 *.log
 
-# Test outputs
-logs/
+# Screenshots
 screenshots/
-reports/
-*.html
-*.xml
 
-# Secrets (never commit)
+# Reports
+report.html
+assets/
+allure-results/
+allure-report/
+
+# Credentials (NEVER commit)
 .env
 *.pem
 *.key
-secrets/
-credentials/
+secrets.json
+credentials.json
 
 # OS
 Thumbs.db
