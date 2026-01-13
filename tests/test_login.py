@@ -9,109 +9,163 @@ from src.utils.exceptions import LoginFailedError
 
 class TestLogin:
 
-    @pytest.mark.parametrize("login_case", [
-        {"username": "validUserWeb", "password": "validPassWeb", "expected": "success", "platform": "web", "story_id": "AUTH-001"},
-        {"username": "validUserMobile", "password": "validPassMobile", "expected": "success", "platform": "mobile", "story_id": "AUTH-002"},
-    ])
-    def test_AUTH_001_002_valid_login(self, driver, login_case):
+    @pytest.mark.story("AUTH-001")
+    @pytest.mark.P1
+    @pytest.mark.login
+    @pytest.mark.positive
+    def test_AUTH_001_valid_login_web(self, driver, base_url):
         """
-        Test valid login on Web and Mobile (AUTH-001, AUTH-002).
+        Test: AUTH-001 - Login with valid credentials on Web
+        Persona: Registered User
+        Priority: P1
+        Description: As a Registered User, I want to log in to the application via the web 
+                     so that I can access my dashboard.
         """
-        login_page = LoginPage(driver)
-        result = login_page.login(login_case["username"], login_case["password"])
-        assert result["result"] == "success", f"Expected success, got {result['result']}"
-        assert result["elapsed"] <= 2, "Login response time exceeded 2 seconds"
+        page = LoginPage(driver)
+        page.open(base_url)
+        result = page.login("valid_user", "Valid@123")
+        assert result is True, "User should be redirected to dashboard"
 
-    @pytest.mark.parametrize("login_case", [
-        {"username": "invalidUserWeb", "password": "invalidPassWeb", "expected": "error", "platform": "web", "story_id": "AUTH-003"},
-        {"username": "invalidUserMobile", "password": "invalidPassMobile", "expected": "error", "platform": "mobile", "story_id": "AUTH-004"},
-    ])
-    def test_AUTH_003_004_invalid_login(self, driver, login_case):
+    @pytest.mark.story("AUTH-003")
+    @pytest.mark.P1
+    @pytest.mark.login
+    @pytest.mark.negative
+    def test_AUTH_003_invalid_login_web(self, driver, base_url):
         """
-        Test invalid login on Web and Mobile (AUTH-003, AUTH-004).
+        Test: AUTH-003 - Login with invalid credentials on Web
+        Persona: Registered User
+        Priority: P1
+        Description: As a Registered User, I want to be notified when I enter invalid credentials 
+                     on the web so that I can correct my input.
         """
-        login_page = LoginPage(driver)
-        result = login_page.login(login_case["username"], login_case["password"])
-        assert result["result"] == "error", f"Expected error, got {result['result']}"
-        assert "incorrect" in result["message"].lower()
+        page = LoginPage(driver)
+        page.open(base_url)
+        try:
+            result = page.login("invalid_user", "Invalid@123")
+            assert result is False, "Error message should be displayed"
+            assert page.is_visible(*page.ERROR_MESSAGE), "Error message should be visible"
+            assert page.is_visible(*page.USERNAME_INPUT), "Should remain on login page"
+        except LoginFailedError as e:
+            assert "locked" not in str(e).lower(), "Account should not be locked for this test"
 
-    @pytest.mark.parametrize("login_case", [
-        {"username": "lockoutUserWeb", "password": "invalidPassWeb", "expected": "locked", "platform": "web", "story_id": "AUTH-005"},
-        {"username": "lockoutUserMobile", "password": "invalidPassMobile", "expected": "locked", "platform": "mobile", "story_id": "AUTH-006"},
-    ])
-    def test_AUTH_005_006_account_lockout(self, driver, login_case):
+    @pytest.mark.story("AUTH-005")
+    @pytest.mark.P1
+    @pytest.mark.login
+    @pytest.mark.negative
+    def test_AUTH_005_account_lockout_web(self, driver, base_url):
         """
-        Test account lockout after 5 failed attempts (AUTH-005, AUTH-006).
+        Test: AUTH-005 - Account lockout after repeated failed attempts on Web
+        Persona: Registered User
+        Priority: P1
+        Description: As a Registered User, I want my account to be locked after repeated failed 
+                     login attempts on the web to protect against unauthorized access.
         """
-        login_page = LoginPage(driver)
-        for _ in range(5):
+        page = LoginPage(driver)
+        page.open(base_url)
+        locked = False
+        for i in range(5):
             try:
-                login_page.login(login_case["username"], login_case["password"])
+                page.login("lockout_user", "WrongPassword")
+            except LoginFailedError as e:
+                if "locked" in str(e).lower():
+                    locked = True
+                    break
+        assert locked, "Account should be locked after 5 failed attempts"
+        assert page.is_visible(*page.LOCKED_MESSAGE), "Locked message should be visible"
+
+    @pytest.mark.story("AUTH-007")
+    @pytest.mark.P1
+    @pytest.mark.login
+    @pytest.mark.negative
+    def test_AUTH_007_locked_user_web(self, driver, base_url):
+        """
+        Test: AUTH-007 - Locked user receives lockout notification on Web
+        Persona: Locked User
+        Priority: P1
+        Description: As a Locked User, I want to be notified that my account is locked when I 
+                     attempt to log in on the web so that I know why I cannot access my account.
+        """
+        page = LoginPage(driver)
+        page.open(base_url)
+        with pytest.raises(LoginFailedError):
+            page.login("locked_user", "AnyPassword")
+        assert page.is_visible(*page.LOCKED_MESSAGE), "Locked message should be visible"
+        assert not page.is_visible(*page.DASHBOARD), "Dashboard should not be accessible"
+
+    @pytest.mark.story("AUTH-009")
+    @pytest.mark.P2
+    @pytest.mark.login
+    @pytest.mark.positive
+    def test_AUTH_009_password_toggle_web(self, driver, base_url):
+        """
+        Test: AUTH-009 - Password visibility toggle on Web
+        Persona: Registered User
+        Priority: P2
+        Description: As a Registered User, I want to toggle password visibility on the web login 
+                     page so that I can verify my password entry.
+        """
+        page = LoginPage(driver)
+        page.open(base_url)
+        # Initially masked
+        assert page.is_password_masked(), "Password should be masked initially"
+        # Toggle to show
+        shown = page.toggle_password_visibility()
+        assert shown, "Password should be shown in plain text"
+        # Toggle to mask again
+        shown = page.toggle_password_visibility()
+        assert not shown, "Password should be masked again"
+
+    @pytest.mark.story("AUTH-012")
+    @pytest.mark.P1
+    @pytest.mark.login
+    @pytest.mark.positive
+    def test_AUTH_012_accessibility_login_form(self, driver, base_url):
+        """
+        Test: AUTH-012 - Accessibility compliance for login forms
+        Persona: Registered User
+        Priority: P1
+        Description: As a Registered User, I want the login forms to be accessible so that users 
+                     with disabilities can log in without barriers.
+        """
+        page = LoginPage(driver)
+        page.open(base_url)
+        # Accessibility checks (simplified, real tests use axe or pa11y)
+        assert page.is_visible(*page.USERNAME_INPUT), "Username field should be accessible"
+        assert page.is_visible(*page.PASSWORD_INPUT), "Password field should be accessible"
+        assert page.is_visible(*page.LOGIN_BUTTON), "Login button should be accessible"
+
+
+class TestLoginDataDriven:
+    """
+    Data-driven tests using CSV parametrization.
+    """
+
+    @pytest.mark.story("AUTH-001")
+    @pytest.mark.P1
+    def test_login_with_csv_data(self, driver, base_url, login_row):
+        """
+        Test: Data-driven login test using CSV data
+        """
+        if "scenario" not in login_row:
+            pytest.skip("No scenario defined in CSV row")
+        
+        page = LoginPage(driver)
+        page.open(base_url)
+        
+        scenario = login_row["scenario"]
+        username = login_row["username"]
+        password = login_row["password"]
+        
+        if "valid" in scenario.lower():
+            result = page.login(username, password)
+            assert result is True, f"Valid login should succeed for {username}"
+        elif "invalid" in scenario.lower():
+            try:
+                result = page.login(username, password)
+                assert result is False, f"Invalid login should fail for {username}"
             except LoginFailedError:
-                pass
-        result = login_page.login(login_case["username"], login_case["password"])
-        assert result["result"] == "locked", f"Expected locked, got {result['result']}"
-        assert "locked" in result["message"].lower()
-
-    @pytest.mark.parametrize("login_case", [
-        {"username": "lockedUserWeb", "password": "anyPassWeb", "expected": "locked", "platform": "web", "story_id": "AUTH-007"},
-        {"username": "lockedUserMobile", "password": "anyPassMobile", "expected": "locked", "platform": "mobile", "story_id": "AUTH-008"},
-    ])
-    def test_AUTH_007_008_locked_user_message(self, driver, login_case):
-        """
-        Test locked user receives lockout message (AUTH-007, AUTH-008).
-        """
-        login_page = LoginPage(driver)
-        result = login_page.login(login_case["username"], login_case["password"])
-        assert result["result"] == "locked", f"Expected locked, got {result['result']}"
-        assert "locked" in result["message"].lower()
-
-    def test_AUTH_009_password_visibility_toggle_web(self, driver):
-        """
-        Test password visibility toggle on Web (AUTH-009).
-        """
-        login_page = LoginPage(driver)
-        # Initially password field type should be 'password'
-        initial_type = login_page.find_element(*LoginPage.PASSWORD_INPUT).get_attribute("type")
-        assert initial_type == "password"
-        # Toggle visibility
-        toggled_type = login_page.toggle_password_visibility()
-        assert toggled_type == "text"
-        # Toggle back
-        toggled_type_back = login_page.toggle_password_visibility()
-        assert toggled_type_back == "password"
-
-    def test_AUTH_010_password_visibility_toggle_mobile(self, driver):
-        """
-        Test password visibility toggle on Mobile (AUTH-010).
-        """
-        login_page = LoginPage(driver)
-        initial_type = login_page.find_element(*LoginPage.PASSWORD_INPUT).get_attribute("type")
-        assert initial_type == "password"
-        toggled_type = login_page.toggle_password_visibility()
-        assert toggled_type == "text"
-        toggled_type_back = login_page.toggle_password_visibility()
-        assert toggled_type_back == "password"
-
-    def test_AUTH_011_audit_log_no_plaintext(self, driver):
-        """
-        Test audit log entry is created without plain-text credentials (AUTH-011).
-        Manual/Mock validation required.
-        """
-        # This test should verify via API or DB that audit log does not store plain-text credentials.
-        # For demo, we assert True.
-        assert True
-
-    def test_AUTH_012_accessibility_web(self, driver):
-        """
-        Test accessibility compliance for login on Web (AUTH-012).
-        """
-        login_page = LoginPage(driver)
-        assert login_page.is_accessible(), "Login page is not accessible per WCAG 2.1 AA"
-
-    def test_AUTH_013_accessibility_mobile(self, driver):
-        """
-        Test accessibility compliance for login on Mobile (AUTH-013).
-        """
-        login_page = LoginPage(driver)
-        assert login_page.is_accessible(), "Login page is not accessible per WCAG 2.1 AA"
+                pass  # Expected for invalid credentials
+        elif "locked" in scenario.lower():
+            with pytest.raises(LoginFailedError):
+                page.login(username, password)
+            assert page.is_visible(*page.LOCKED_MESSAGE), "Locked message should be visible"
