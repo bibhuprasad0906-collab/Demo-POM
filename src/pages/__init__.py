@@ -1,1 +1,1 @@
-# src.pages package
+"""Page Objects Package"""
