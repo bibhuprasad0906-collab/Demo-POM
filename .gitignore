@@ -43,20 +43,23 @@ env/
 htmlcov/
 .tox/
 .nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Logs
 *.log
+logs/
+screenshots/
+
+# Reports
 report.html
 assets/
 
-# Selenium
-screenshots/
-logs/
-*.png
-
-# Credentials (NEVER COMMIT)
+# Secrets (never commit)
 *.env
-.env.local
+.env
 secrets.json
-credentials.json
 *.pem
 *.key
 
