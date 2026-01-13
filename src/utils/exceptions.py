@@ -7,5 +7,5 @@ class ElementNotFoundError(Exception):
     pass
 
 class LoginFailedError(Exception):
-    """Raised when login fails."""
+    """Raised when login fails unexpectedly."""
     pass
