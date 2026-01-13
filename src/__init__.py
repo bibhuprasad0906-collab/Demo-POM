@@ -1,1 +1,1 @@
-# src package
+"""Selenium Pytest Automation Framework - Source Package"""
