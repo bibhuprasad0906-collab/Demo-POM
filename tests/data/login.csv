@@ -1,9 +1,5 @@
-username,password,expected,platform,story_id
-validUserWeb,validPassWeb,success,web,AUTH-001
-validUserMobile,validPassMobile,success,mobile,AUTH-002
-invalidUserWeb,invalidPassWeb,error,web,AUTH-003
-invalidUserMobile,invalidPassMobile,error,mobile,AUTH-004
-lockoutUserWeb,invalidPassWeb,locked,web,AUTH-005
-lockoutUserMobile,invalidPassMobile,locked,mobile,AUTH-006
-lockedUserWeb,anyPassWeb,locked,web,AUTH-007
-lockedUserMobile,anyPassMobile,locked,mobile,AUTH-008
+username,password,scenario
+validUser,validPass,AUTH-001_valid
+invalidUser,invalidPass,AUTH-003_invalid
+lockedUser,anyPass,AUTH-007_locked
+lockoutUser,wrongPass,AUTH-005_lockout
