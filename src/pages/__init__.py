@@ -1,1 +1,1 @@
-# src.pages package initialization
+# src.pages package
