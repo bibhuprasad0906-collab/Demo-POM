@@ -16,12 +16,14 @@ def get_driver():
         options = ChromeOptions()
         if Config.HEADLESS:
             options.add_argument("--headless")
-            options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
         driver = webdriver.Chrome(options=options)
     elif Config.BROWSER == "firefox":
         options = FirefoxOptions()
         if Config.HEADLESS:
             options.add_argument("--headless")
+        options.add_argument("--width=1920")
+        options.add_argument("--height=1080")
         driver = webdriver.Firefox(options=options)
     else:
         raise ValueError(f"Unsupported browser: {Config.BROWSER}")
