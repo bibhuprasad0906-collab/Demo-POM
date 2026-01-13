@@ -37,31 +37,27 @@ env/
 *~
 .DS_Store
 
-# Testing
+# Pytest
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
 .nox/
-coverage.xml
-*.cover
-.hypothesis/
-
-# Logs
 *.log
+
+# Test outputs
 logs/
 screenshots/
-
-# Reports
-report.html
-assets/
+reports/
+*.html
+*.xml
 
 # Secrets (never commit)
-*.env
 .env
-secrets.json
 *.pem
 *.key
+secrets/
+credentials/
 
 # OS
 Thumbs.db
