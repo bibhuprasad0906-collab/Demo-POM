@@ -11,14 +11,15 @@ import logging
 class BasePage:
     def __init__(self, driver, timeout=10):
         """
-        Initialize BasePage with driver and default timeout.
+        Initialize with Selenium WebDriver and default timeout.
         """
         self.driver = driver
         self.timeout = timeout
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def find_element(self, locator):
         """
-        Safely find a single element.
+        Safely find element by locator.
         Raises ElementNotFoundError if not found.
         """
         try:
@@ -26,33 +27,33 @@ class BasePage:
                 EC.presence_of_element_located(locator)
             )
         except Exception as e:
-            logging.error(f"Element not found: {locator} - {str(e)}")
+            self.logger.error(f"Element not found: {locator} - {str(e)}")
             raise ElementNotFoundError(f"Element not found: {locator}")
 
-    def click(self, locator):
+    def click_element(self, locator):
         """
-        Safely click an element.
+        Safely click element.
         """
         try:
             element = self.find_element(locator)
             element.click()
         except Exception as e:
-            logging.error(f"Failed to click element: {locator} - {str(e)}")
-            raise ElementNotFoundError(f"Failed to click element: {locator}")
+            self.logger.error(f"Click failed for {locator}: {str(e)}")
+            raise
 
-    def send_keys(self, locator, value):
+    def enter_text(self, locator, text):
         """
-        Safely send keys to an element.
+        Safely enter text into element.
         """
         try:
             element = self.find_element(locator)
             element.clear()
-            element.send_keys(value)
+            element.send_keys(text)
         except Exception as e:
-            logging.error(f"Failed to send keys to element: {locator} - {str(e)}")
-            raise ElementNotFoundError(f"Failed to send keys to element: {locator}")
+            self.logger.error(f"Text entry failed for {locator}: {str(e)}")
+            raise
 
-    def is_visible(self, locator):
+    def is_element_visible(self, locator):
         """
         Check if element is visible.
         """
@@ -60,18 +61,17 @@ class BasePage:
             element = WebDriverWait(self.driver, self.timeout).until(
                 EC.visibility_of_element_located(locator)
             )
-            return element.is_displayed()
-        except Exception as e:
-            logging.error(f"Element not visible: {locator} - {str(e)}")
+            return True
+        except Exception:
             return False
 
-    def get_text(self, locator):
+    def get_element_text(self, locator):
         """
-        Get text from an element.
+        Get text from element.
         """
         try:
             element = self.find_element(locator)
             return element.text
         except Exception as e:
-            logging.error(f"Failed to get text from element: {locator} - {str(e)}")
-            raise ElementNotFoundError(f"Failed to get text from element: {locator}")
+            self.logger.error(f"Get text failed for {locator}: {str(e)}")
+            raise
