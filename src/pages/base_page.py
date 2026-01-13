@@ -1,6 +1,6 @@
 """
 BasePage: Abstract base class for all page objects.
-Provides safe Selenium wrappers and robust error handling.
+Provides safe Selenium wrappers with robust error handling and logging.
 """
 
 from selenium.webdriver.support.ui import WebDriverWait
@@ -11,67 +11,49 @@ import logging
 class BasePage:
     def __init__(self, driver, timeout=10):
         """
-        Initialize with Selenium WebDriver and default timeout.
+        :param driver: Selenium WebDriver instance
+        :param timeout: Default timeout for element waits
         """
         self.driver = driver
         self.timeout = timeout
-        self.logger = logging.getLogger(self.__class__.__name__)
 
     def find_element(self, locator):
         """
-        Safely find element by locator.
-        Raises ElementNotFoundError if not found.
+        Safely find an element with error handling.
+        :param locator: Tuple (By.<method>, locator_string)
+        :return: WebElement
+        :raises: ElementNotFoundError
         """
         try:
             return WebDriverWait(self.driver, self.timeout).until(
                 EC.presence_of_element_located(locator)
             )
         except Exception as e:
-            self.logger.error(f"Element not found: {locator} - {str(e)}")
+            logging.error(f"Element not found: {locator} - {str(e)}")
             raise ElementNotFoundError(f"Element not found: {locator}")
 
     def click_element(self, locator):
         """
-        Safely click element.
+        Safely click an element.
+        :param locator: Tuple (By.<method>, locator_string)
         """
         try:
             element = self.find_element(locator)
             element.click()
         except Exception as e:
-            self.logger.error(f"Click failed for {locator}: {str(e)}")
-            raise
+            logging.error(f"Failed to click element: {locator} - {str(e)}")
+            raise ElementNotFoundError(f"Failed to click element: {locator}")
 
     def enter_text(self, locator, text):
         """
-        Safely enter text into element.
+        Safely enter text into an input field.
+        :param locator: Tuple (By.<method>, locator_string)
+        :param text: Text to enter
         """
         try:
             element = self.find_element(locator)
             element.clear()
             element.send_keys(text)
         except Exception as e:
-            self.logger.error(f"Text entry failed for {locator}: {str(e)}")
-            raise
-
-    def is_element_visible(self, locator):
-        """
-        Check if element is visible.
-        """
-        try:
-            element = WebDriverWait(self.driver, self.timeout).until(
-                EC.visibility_of_element_located(locator)
-            )
-            return True
-        except Exception:
-            return False
-
-    def get_element_text(self, locator):
-        """
-        Get text from element.
-        """
-        try:
-            element = self.find_element(locator)
-            return element.text
-        except Exception as e:
-            self.logger.error(f"Get text failed for {locator}: {str(e)}")
-            raise
+            logging.error(f"Failed to enter text: {locator} - {str(e)}")
+            raise ElementNotFoundError(f"Failed to enter text: {locator}")
