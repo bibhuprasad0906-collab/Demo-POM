@@ -37,45 +37,33 @@ env/
 *~
 .DS_Store
 
-# Pytest
+# Testing
 .pytest_cache/
-.cache/
-*.log
-report.html
-assets/
-
-# Coverage
 .coverage
-.coverage.*
 htmlcov/
+.tox/
+.nox/
+coverage.xml
 *.cover
 .hypothesis/
 
-# Selenium
-screenshots/
+# Logs
+*.log
 logs/
-*.png
-*.jpg
-*.jpeg
+screenshots/
 
-# Environment variables
-.env
-.env.local
-.env.*.local
+# Reports
+report.html
+assets/
 
 # Secrets (NEVER commit)
+*.env
+.env.local
+secrets.json
 *.pem
 *.key
-*.crt
-secrets/
-credentials/
-*.token
+token.txt
 
 # OS
 Thumbs.db
 .DS_Store
-
-# Test artifacts
-test-results/
-allure-results/
-allure-report/
