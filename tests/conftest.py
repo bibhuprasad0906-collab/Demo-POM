@@ -9,18 +9,14 @@ from src.utils.driver_factory import get_driver
 from src.utils.config import Config
 
 @pytest.fixture(scope="session")
-def config():
-    return Config
-
-@pytest.fixture(scope="function")
-def driver(config):
-    driver = get_driver()
-    yield driver
-    driver.quit()
+def driver():
+    drv = get_driver()
+    yield drv
+    drv.quit()
 
 def pytest_generate_tests(metafunc):
     if "login_data" in metafunc.fixturenames:
-        with open("tests/data/login.csv", newline="") as csvfile:
+        with open("tests/data/login.csv", newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             data = [row for row in reader]
         metafunc.parametrize("login_data", data)
