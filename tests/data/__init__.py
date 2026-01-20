@@ -1,1 +1,1 @@
-"""Test data package initialization."""
+"""Test data package."""
