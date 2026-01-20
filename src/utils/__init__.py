@@ -1,1 +1,1 @@
-"""Utilities package initialization."""
+"""Utilities package for configuration, driver management, and exceptions."""
