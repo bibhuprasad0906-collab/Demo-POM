@@ -1,1 +1,1 @@
-"""Page Objects Package"""
+"""Page objects package initialization."""
