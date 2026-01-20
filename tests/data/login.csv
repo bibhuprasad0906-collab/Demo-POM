@@ -1,5 +1,9 @@
-username,password,scenario
-validUser,validPass,AUTH-001_valid
-invalidUser,invalidPass,AUTH-003_invalid
-lockedUser,anyPass,AUTH-007_locked
-lockoutUser,wrongPass,AUTH-005_lockout
+scenario,username,password,expected
+AUTH-001,user1,pass1,success
+AUTH-002,mobileuser1,pass1,success
+AUTH-003,user2,wrongpass,fail
+AUTH-004,mobileuser2,wrongpass,fail
+AUTH-005,user3,wrongpass,locked
+AUTH-006,mobileuser3,wrongpass,locked
+AUTH-007,lockeduser1,pass1,locked
+AUTH-008,lockedmobileuser1,pass1,locked
