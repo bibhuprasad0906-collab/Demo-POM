@@ -7,5 +7,5 @@ class ElementNotFoundError(Exception):
     pass
 
 class LoginFailedError(Exception):
-    """Raised when login fails due to invalid credentials or account lockout."""
+    """Raised when login fails."""
     pass
