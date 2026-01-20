@@ -1,1 +1,1 @@
-"""Source package for Selenium pytest automation framework."""
+"""Source package for page objects and utilities."""
