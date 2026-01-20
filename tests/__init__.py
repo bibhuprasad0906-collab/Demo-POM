@@ -1,1 +1,1 @@
-"""Tests package for Selenium pytest automation."""
+"""Tests package for pytest test cases."""
