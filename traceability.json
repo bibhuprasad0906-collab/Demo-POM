@@ -1,90 +1,13 @@
 {
-  "AUTH-001": {
-    "title": "Login with valid credentials on Web",
-    "testCases": ["test_AUTH_001_valid_login_web", "TC-AUTH-001-01"],
-    "scenarios": ["SCN-AUTH-001-01"],
-    "priority": "P1",
-    "type": "positive"
-  },
-  "AUTH-002": {
-    "title": "Login with valid credentials on Mobile",
-    "testCases": ["TC-AUTH-002-01"],
-    "scenarios": ["SCN-AUTH-002-01"],
-    "priority": "P1",
-    "type": "positive"
-  },
-  "AUTH-003": {
-    "title": "Login with invalid credentials on Web",
-    "testCases": ["test_AUTH_003_invalid_login_web", "TC-AUTH-003-01"],
-    "scenarios": ["SCN-AUTH-003-01"],
-    "priority": "P1",
-    "type": "negative"
-  },
-  "AUTH-004": {
-    "title": "Login with invalid credentials on Mobile",
-    "testCases": ["TC-AUTH-004-01"],
-    "scenarios": ["SCN-AUTH-004-01"],
-    "priority": "P1",
-    "type": "negative"
-  },
-  "AUTH-005": {
-    "title": "Account lockout after repeated failed attempts on Web",
-    "testCases": ["test_AUTH_005_account_lockout_web"],
-    "scenarios": ["SCN-AUTH-005-01"],
-    "priority": "P1",
-    "type": "negative",
-    "dependencies": ["AUTH-003"]
-  },
-  "AUTH-006": {
-    "title": "Account lockout after repeated failed attempts on Mobile",
-    "testCases": [],
-    "scenarios": ["SCN-AUTH-006-01"],
-    "priority": "P1",
-    "type": "negative",
-    "dependencies": ["AUTH-004"]
-  },
-  "AUTH-007": {
-    "title": "Locked user receives lockout notification on Web",
-    "testCases": ["test_AUTH_007_locked_user_web"],
-    "scenarios": ["SCN-AUTH-007-01"],
-    "priority": "P1",
-    "type": "negative",
-    "dependencies": ["AUTH-005"]
-  },
-  "AUTH-008": {
-    "title": "Locked user receives lockout notification on Mobile",
-    "testCases": [],
-    "scenarios": ["SCN-AUTH-008-01"],
-    "priority": "P1",
-    "type": "negative",
-    "dependencies": ["AUTH-006"]
-  },
-  "AUTH-009": {
-    "title": "Password visibility toggle on Web",
-    "testCases": ["test_AUTH_009_password_toggle_web"],
-    "scenarios": ["SCN-AUTH-009-01"],
-    "priority": "P2",
-    "type": "positive"
-  },
-  "AUTH-010": {
-    "title": "Password visibility toggle on Mobile",
-    "testCases": [],
-    "scenarios": ["SCN-AUTH-010-01"],
-    "priority": "P2",
-    "type": "positive"
-  },
-  "AUTH-011": {
-    "title": "Audit login attempts",
-    "testCases": [],
-    "scenarios": ["SCN-AUTH-011-01"],
-    "priority": "P1",
-    "type": "positive"
-  },
-  "AUTH-012": {
-    "title": "Accessibility compliance for login forms",
-    "testCases": ["test_AUTH_012_accessibility_login_form"],
-    "scenarios": ["SCN-AUTH-012-01"],
-    "priority": "P1",
-    "type": "positive"
-  }
+  "AUTH-001": ["test_AUTH_001_login_with_valid_credentials_on_web"],
+  "AUTH-002": ["test_AUTH_002_login_with_valid_credentials_on_mobile"],
+  "AUTH-003": ["test_AUTH_003_login_with_invalid_credentials_on_web"],
+  "AUTH-004": ["test_AUTH_004_login_with_invalid_credentials_on_mobile"],
+  "AUTH-005": ["test_AUTH_005_account_lockout_after_failed_attempts_on_web"],
+  "AUTH-006": ["test_AUTH_006_account_lockout_after_failed_attempts_on_mobile"],
+  "AUTH-007": ["test_AUTH_007_locked_user_notification_on_web"],
+  "AUTH-008": ["test_AUTH_008_locked_user_notification_on_mobile"],
+  "AUTH-009": ["test_AUTH_009_password_visibility_toggle_on_web"],
+  "AUTH-010": ["test_AUTH_010_password_visibility_toggle_on_mobile"],
+  "AUTH-011": ["test_AUTH_011_audit_login_attempts_for_compliance"]
 }
