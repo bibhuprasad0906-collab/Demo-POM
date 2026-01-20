@@ -48,8 +48,10 @@ coverage.xml
 .hypothesis/
 
 # Logs
-*.log
 logs/
+*.log
+
+# Screenshots
 screenshots/
 
 # Reports
@@ -57,12 +59,10 @@ report.html
 assets/
 
 # Secrets (NEVER commit)
-*.env
-.env.local
-secrets.json
+.env
 *.pem
 *.key
-token.txt
+secrets.json
 
 # OS
 Thumbs.db
