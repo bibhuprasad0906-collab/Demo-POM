@@ -1,1 +1,1 @@
-"""Page objects package."""
+"""Pages package for Page Object Model implementation."""
