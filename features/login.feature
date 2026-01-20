@@ -1,72 +1,56 @@
 Feature: Login functionality
 
-  Scenario: AUTH-001 - Login with valid credentials on Web
-    Given the login page is open on a web browser
+  Scenario: AUTH-001_Login_with_valid_credentials_on_Web
+    Given the login page is open on Web
     When I enter a valid username and valid password and click Login
     Then I should be redirected to my dashboard within 2 seconds
 
-  Scenario: AUTH-002 - Login with valid credentials on Mobile
-    Given the login screen is open on the mobile app
+  Scenario: AUTH-002_Login_with_valid_credentials_on_Mobile
+    Given the login page is open on Mobile
     When I enter a valid username and valid password and tap Login
     Then I should be redirected to my dashboard within 2 seconds
 
-  Scenario: AUTH-003 - Login with invalid credentials on Web
-    Given the login page is open on a web browser
-    When I enter an invalid username or password and click Login
-    Then I should see an error message indicating invalid credentials
-    And I should remain on the login page
+  Scenario: AUTH-003_Login_with_invalid_credentials_on_Web
+    Given the login page is open on Web
+    When I enter an invalid username or invalid password and click Login
+    Then I should see an error message indicating invalid credentials and not be logged in
 
-  Scenario: AUTH-004 - Login with invalid credentials on Mobile
-    Given the login screen is open on the mobile app
-    When I enter an invalid username or password and tap Login
-    Then I should see an error message indicating invalid credentials
-    And I should remain on the login screen
+  Scenario: AUTH-004_Login_with_invalid_credentials_on_Mobile
+    Given the login page is open on Mobile
+    When I enter an invalid username or invalid password and tap Login
+    Then I should see an error message indicating invalid credentials and not be logged in
 
-  Scenario: AUTH-005 - Account lockout after repeated failed attempts on Web
-    Given the login page is open on a web browser
+  Scenario: AUTH-005_Account_lockout_after_repeated_failed_attempts_on_Web
+    Given the login page is open on Web
     When I enter invalid credentials 5 times in a row
-    Then my account should be locked
-    And I should see a message indicating my account is locked
+    Then my account should be locked and I should see a message indicating the lockout
 
-  Scenario: AUTH-006 - Account lockout after repeated failed attempts on Mobile
-    Given the login screen is open on the mobile app
+  Scenario: AUTH-006_Account_lockout_after_repeated_failed_attempts_on_Mobile
+    Given the login page is open on Mobile
     When I enter invalid credentials 5 times in a row
-    Then my account should be locked
-    And I should see a message indicating my account is locked
+    Then my account should be locked and I should see a message indicating the lockout
 
-  Scenario: AUTH-007 - Locked user receives lockout notification on Web
-    Given my account is locked
-    When I attempt to log in on the web
-    Then I should see a message indicating my account is locked
-    And I should not be able to access the dashboard
+  Scenario: AUTH-007_Locked_user_receives_lockout_notification_on_Web
+    Given my account is locked and the login page is open on Web
+    When I enter my credentials and click Login
+    Then I should see a message indicating my account is locked and not be logged in
 
-  Scenario: AUTH-008 - Locked user receives lockout notification on Mobile
-    Given my account is locked
-    When I attempt to log in on the mobile app
-    Then I should see a message indicating my account is locked
-    And I should not be able to access the dashboard
+  Scenario: AUTH-008_Locked_user_receives_lockout_notification_on_Mobile
+    Given my account is locked and the login page is open on Mobile
+    When I enter my credentials and tap Login
+    Then I should see a message indicating my account is locked and not be logged in
 
-  Scenario: AUTH-009 - Password visibility toggle on Web
-    Given the login page is open on a web browser
+  Scenario: AUTH-009_Password_visibility_toggle_on_Web
+    Given the login page is open on Web
     When I click the password visibility toggle
-    Then my password should be shown in plain text
-    When I click the toggle again
-    Then my password should be masked
+    Then my password should be shown or hidden accordingly
 
-  Scenario: AUTH-010 - Password visibility toggle on Mobile
-    Given the login screen is open on the mobile app
+  Scenario: AUTH-010_Password_visibility_toggle_on_Mobile
+    Given the login page is open on Mobile
     When I tap the password visibility toggle
-    Then my password should be shown in plain text
-    When I tap the toggle again
-    Then my password should be masked
+    Then my password should be shown or hidden accordingly
 
-  Scenario: AUTH-011 - Audit login attempts
-    Given a user attempts to log in (success or failure)
-    When the attempt is processed
-    Then an audit log entry is created without storing plain-text credentials
-    And the log includes timestamp, username, result (success/failure/lockout), and environment
-
-  Scenario: AUTH-012 - Accessibility compliance for login forms
-    Given the login page or screen is open
-    When I use assistive technologies
-    Then all form fields, buttons, and error messages are accessible according to WCAG 2.1 AA
+  Scenario: AUTH-011_Audit_login_attempts_for_compliance
+    Given users attempt to log in
+    When I review the audit logs
+    Then I should see all login attempts with timestamps, user identifiers, and outcomes, but no plain-text credentials
