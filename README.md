@@ -1,84 +1,102 @@
-# Selenium Pytest Automation Framework
+# Selenium Pytest Automation Framework - Login Module
 
 ## Overview
-This is a production-ready Selenium pytest automation framework implementing the Page Object Model (POM) pattern for UI testing. The framework is designed for enterprise-grade quality assurance with robust error handling, comprehensive logging, and full traceability.
+
+This is a production-ready, enterprise-grade Selenium pytest automation framework for testing login functionality across web and mobile platforms. The framework implements robust Page Object Model (POM) architecture, comprehensive error handling, and full traceability between test cases and user stories.
 
 ## Features
+
 - **Page Object Model (POM)**: Clean separation of test logic and page interactions
-- **Data-Driven Testing**: CSV-based test data management
-- **Cross-Browser Support**: Chrome and Firefox with headless mode
-- **Robust Error Handling**: Custom exceptions and comprehensive logging
-- **Traceability**: Full mapping between user stories and test cases
+- **Cross-browser Support**: Chrome and Firefox with headless mode
+- **Data-driven Testing**: CSV-based test data management
+- **Comprehensive Logging**: Detailed logging for debugging and audit trails
 - **CI/CD Ready**: GitHub Actions workflow included
-- **Security Compliant**: No credential exposure, OWASP-aligned practices
+- **Traceability**: Complete mapping between user stories and test cases
+- **Security Compliant**: No plain-text credential storage, secure token handling
+- **Accessibility**: WCAG 2.1 AA compliance considerations
 
 ## Project Structure
+
 ```
 .
-├── README.md
-├── requirements.txt
-├── pytest.ini
-├── .gitignore
+├── .github/
+│   └── workflows/
+│       └── ci.yml                 # GitHub Actions CI pipeline
 ├── features/
-│   └── login.feature
+│   └── login.feature              # Gherkin scenarios for documentation
 ├── src/
 │   ├── pages/
-│   │   ├── base_page.py
-│   │   └── login_page.py
+│   │   ├── base_page.py          # Abstract base page with safe Selenium wrappers
+│   │   └── login_page.py         # Login page object
 │   └── utils/
-│       ├── config.py
-│       ├── driver_factory.py
-│       └── exceptions.py
+│       ├── config.py              # Configuration management
+│       ├── driver_factory.py     # WebDriver instantiation
+│       └── exceptions.py         # Custom exceptions
 ├── tests/
-│   ├── conftest.py
-│   ├── test_login.py
-│   └── data/
-│       └── login.csv
-├── traceability.json
-└── .github/
-    └── workflows/
-        └── ci.yml
+│   ├── data/
+│   │   └── login.csv             # Test data for data-driven tests
+│   ├── conftest.py               # Pytest fixtures and configuration
+│   └── test_login.py             # Login test suite
+├── .gitignore                     # Git ignore patterns
+├── pytest.ini                     # Pytest configuration
+├── requirements.txt               # Python dependencies
+├── traceability.json             # Story-to-test mapping
+└── README.md                      # This file
 ```
 
-## Setup Instructions
+## Prerequisites
 
-### Prerequisites
 - Python 3.8 or higher
-- Chrome or Firefox browser
-- ChromeDriver or GeckoDriver (managed automatically by Selenium 4.x)
+- Chrome/Firefox browser installed
+- ChromeDriver/GeckoDriver in PATH (or use webdriver-manager)
+- pip package manager
 
-### Installation
-1. Clone the repository:
+## Installation
+
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/bibhuprasad0906-collab/Demo-POM.git
    cd Demo-POM
    ```
 
-2. Create and activate a virtual environment:
+2. **Create and activate virtual environment:**
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. Install dependencies:
+3. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
+4. **Install browser drivers:**
+   - **ChromeDriver**: Download from https://chromedriver.chromium.org/
+   - **GeckoDriver**: Download from https://github.com/mozilla/geckodriver/releases
+   - Add to system PATH or place in project root
+
 ## Configuration
 
-Set environment variables to configure test execution:
+The framework uses environment variables for configuration:
+
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `BASE_URL` | Application base URL | `http://localhost:8000` |
+| `BROWSER` | Browser to use (chrome/firefox) | `chrome` |
+| `HEADLESS` | Run in headless mode (true/false) | `true` |
+| `TIMEOUT` | Default timeout in seconds | `10` |
+
+**Set environment variables:**
 
 ```bash
-export BASE_URL="http://localhost:8080"  # Application base URL
-export BROWSER="chrome"                   # Browser: chrome or firefox
-export HEADLESS="true"                    # Headless mode: true or false
-export TIMEOUT="10"                       # Default timeout in seconds
-```
+# Linux/Mac
+export BASE_URL="https://your-app.com"
+export BROWSER="chrome"
+export HEADLESS="true"
+export TIMEOUT="10"
 
-On Windows:
-```cmd
-set BASE_URL=http://localhost:8080
+# Windows
+set BASE_URL=https://your-app.com
 set BROWSER=chrome
 set HEADLESS=true
 set TIMEOUT=10
@@ -96,159 +114,176 @@ pytest
 pytest tests/test_login.py
 ```
 
-### Run tests with specific markers:
+### Run specific test:
 ```bash
-pytest -m "story('AUTH-001')"
+pytest tests/test_login.py::TestLogin::test_AUTH_001_login_valid_web
 ```
 
-### Run tests with verbose output:
+### Run with verbose output:
 ```bash
 pytest -v
 ```
 
-### Run tests with HTML report:
+### Run in headless mode:
 ```bash
+HEADLESS=true pytest
+```
+
+### Run with specific browser:
+```bash
+BROWSER=firefox pytest
+```
+
+### Generate HTML report:
+```bash
+pip install pytest-html
 pytest --html=report.html --self-contained-html
 ```
 
-## Test Data Management
+## Test Coverage
 
-Test data is stored in CSV files under `tests/data/`. Example format:
+The framework covers the following authentication scenarios:
 
-```csv
-scenario,username,password,expected
-AUTH-001,validUser,validPass,success
-AUTH-003,invalidUser,invalidPass,fail
-```
+| Story ID | Test Case | Description | Priority |
+|----------|-----------|-------------|----------|
+| AUTH-001 | test_AUTH_001_login_valid_web | Login with valid credentials on Web | P1 |
+| AUTH-002 | test_AUTH_002_login_valid_mobile | Login with valid credentials on Mobile | P1 |
+| AUTH-003 | test_AUTH_003_login_invalid_web | Login with invalid credentials on Web | P1 |
+| AUTH-004 | test_AUTH_004_login_invalid_mobile | Login with invalid credentials on Mobile | P1 |
+| AUTH-005 | test_AUTH_005_account_lockout_web | Account lockout after 5 failed attempts on Web | P1 |
+| AUTH-006 | test_AUTH_006_account_lockout_mobile | Account lockout after 5 failed attempts on Mobile | P1 |
+| AUTH-007 | test_AUTH_007_locked_user_web | Display lockout message to Locked User on Web | P1 |
+| AUTH-008 | test_AUTH_008_locked_user_mobile | Display lockout message to Locked User on Mobile | P1 |
+| AUTH-009 | test_AUTH_009_password_visibility_toggle_web | Password visibility toggle on Web | P2 |
+| AUTH-010 | test_AUTH_010_password_visibility_toggle_mobile | Password visibility toggle on Mobile | P2 |
+| AUTH-011 | test_AUTH_011_audit_login_attempts | Audit login attempts for security monitoring | P1 |
 
 ## Traceability
 
-The `traceability.json` file maps user stories to test methods:
-
-```json
-{
-  "AUTH-001": ["test_AUTH_001_login_with_valid_credentials_on_web"],
-  "AUTH-003": ["test_AUTH_003_login_with_invalid_credentials_on_web"]
-}
-```
-
-## Page Objects
-
-### BasePage
-Abstract base class providing safe Selenium wrappers:
-- `find_element(by, value)`: Safe element location with explicit waits
-- `click_element(by, value)`: Safe click with error handling
-- `enter_text(by, value, text)`: Safe text entry with clear
-- `is_element_visible(by, value)`: Visibility check
-
-### LoginPage
-Implements login functionality:
-- `open(base_url)`: Navigate to login page
-- `login(username, password)`: Perform login action
-- `get_error_message()`: Retrieve error message text
-- `get_lockout_message()`: Retrieve lockout message text
-- `toggle_password_visibility()`: Toggle password field visibility
-
-## Error Handling
-
-Custom exceptions in `src/utils/exceptions.py`:
-- `ElementNotFoundError`: Raised when UI element is not found
-- `LoginFailedError`: Raised when login operation fails
-
-## Logging
-
-All operations are logged with appropriate levels:
-- INFO: Normal operations
-- WARNING: Performance degradation or non-critical issues
-- ERROR: Failures and exceptions
-
-Logs are written to console and can be configured for file output.
+Complete traceability mapping is maintained in `traceability.json`. Each test method is deterministically named to match its story ID for easy tracking and reporting.
 
 ## CI/CD Integration
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) runs tests automatically on:
-- Push to main branch
-- Pull requests to main branch
+The framework includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that:
 
-Workflow includes:
-- Python environment setup
-- Dependency installation
-- Browser installation
-- Test execution with environment variables
+- Runs on every push and pull request to main branch
+- Sets up Python environment
+- Installs dependencies
+- Runs tests in headless Chrome mode
+- Fails fast on first test failure
+
+**To use CI/CD:**
+
+1. Add `BASE_URL` as a GitHub secret in repository settings
+2. Push code to trigger workflow
+3. View results in Actions tab
 
 ## Troubleshooting
 
-### Driver Issues
-- **Error**: WebDriver not found
-- **Solution**: Selenium 4.x manages drivers automatically. Ensure you have the latest version.
+### Common Issues and Solutions:
 
-### Element Not Found
-- **Error**: ElementNotFoundError
-- **Solution**: Update locators in page objects to match actual application UI
+**1. ElementNotFoundError**
+- **Cause**: UI element locator is incorrect or element not present
+- **Solution**: Verify locator values in `src/pages/login_page.py` match actual application
+- **Debug**: Add explicit waits or increase timeout
 
-### Timeout Issues
-- **Error**: TimeoutException
-- **Solution**: Increase TIMEOUT environment variable or check application responsiveness
+**2. LoginFailedError**
+- **Cause**: Invalid credentials or application state
+- **Solution**: Verify test data in `tests/data/login.csv` and application state
+- **Debug**: Check application logs and network requests
 
-### Data Mismatch
-- **Error**: Test skipped or failed due to data issues
-- **Solution**: Verify CSV headers and values match expected format
+**3. WebDriverException**
+- **Cause**: Browser driver not found or incompatible version
+- **Solution**: Install correct driver version matching browser version
+- **Debug**: Verify driver is in PATH: `which chromedriver` or `where chromedriver`
 
-## Best Practices
+**4. TimeoutException**
+- **Cause**: Page load or element appearance exceeds timeout
+- **Solution**: Increase `TIMEOUT` environment variable
+- **Debug**: Check network latency and application performance
 
-1. **Locator Strategy**: Use stable locators (ID > Name > CSS > XPath)
-2. **Explicit Waits**: Always use explicit waits for dynamic elements
-3. **Data Separation**: Keep test data separate from test logic
-4. **Error Handling**: Use custom exceptions for clear error reporting
-5. **Logging**: Log all significant operations for debugging
-6. **Traceability**: Maintain mapping between stories and tests
-7. **Security**: Never commit credentials or sensitive data
+**5. Data mismatch in parametrized tests**
+- **Cause**: CSV data format incorrect or missing columns
+- **Solution**: Validate CSV structure matches expected format
+- **Debug**: Check `tests/data/login.csv` for proper headers and data
+
+**6. Headless mode failures**
+- **Cause**: Some UI elements behave differently in headless mode
+- **Solution**: Run in headed mode for debugging: `HEADLESS=false pytest`
+- **Debug**: Add screenshots on failure (already implemented in conftest.py)
 
 ## Maintenance Guidelines
 
-### Adding New Tests
-1. Add test case to appropriate JSON structure
-2. Update CSV data file if needed
-3. Create or update page object methods
-4. Implement test method in test class
-5. Update traceability.json
-6. Run tests locally before committing
+### Adding New Test Cases:
 
-### Updating Page Objects
-1. Identify changed UI elements
-2. Update locators in page object
-3. Update methods if interaction pattern changed
-4. Run affected tests to verify
-5. Update documentation if needed
+1. **Update test data**: Add new row to `tests/data/login.csv`
+2. **Create test method**: Add new parametrized test in `tests/test_login.py`
+3. **Update traceability**: Add mapping to `traceability.json`
+4. **Document**: Update this README with new test case details
 
-### Extending Framework
-1. Add new page objects under `src/pages/`
-2. Add new utilities under `src/utils/`
-3. Add new test files under `tests/`
-4. Update requirements.txt for new dependencies
-5. Update CI workflow if needed
+### Updating Page Objects:
+
+1. **Identify new elements**: Inspect application UI for new locators
+2. **Update page class**: Add new locators and methods to `src/pages/login_page.py`
+3. **Test locally**: Verify changes work in both headed and headless modes
+4. **Update tests**: Modify test methods to use new page object methods
+
+### Extending to New Modules:
+
+1. **Create new page object**: Add new file in `src/pages/`
+2. **Create new test file**: Add new file in `tests/`
+3. **Add test data**: Create new CSV in `tests/data/` if needed
+4. **Update CI**: Modify `.github/workflows/ci.yml` if needed
+5. **Document**: Create module-specific documentation
+
+## Security Considerations
+
+- **No credential storage**: Never commit credentials to repository
+- **Environment variables**: Use environment variables for sensitive data
+- **Token handling**: GitHub tokens are used in-memory only and never logged
+- **Audit compliance**: All login attempts are auditable without storing plain-text credentials
+- **Secret scrubbing**: All outputs are sanitized to prevent credential leakage
 
 ## Non-Functional Requirements
 
-This framework addresses:
-- **Performance**: Response time validation (< 2s for login)
-- **Security**: No plain-text credentials in logs, OWASP compliance
-- **Accessibility**: WCAG 2.1 AA compliance validation ready
-- **Availability**: Designed for 99.9% system availability testing
+- **Performance**: Dashboard load time under 2 seconds
+- **Availability**: System availability 99.9%
+- **Accessibility**: WCAG 2.1 AA compliance
+- **Security**: OWASP authentication guidelines compliance
+- **Audit**: Complete audit trail without plain-text credential storage
+
+## Future Enhancements
+
+- [ ] Integrate Allure reporting for rich test reports
+- [ ] Add API-level authentication tests
+- [ ] Implement visual regression testing
+- [ ] Add performance testing with Lighthouse
+- [ ] Extend to additional modules (dashboard, profile, etc.)
+- [ ] Add accessibility testing with axe-core
+- [ ] Implement parallel test execution
+- [ ] Add database validation for audit logs
+- [ ] Create Docker container for consistent test environment
+- [ ] Add load testing scenarios
 
 ## Support and Contact
 
 For issues, questions, or contributions:
-- Create an issue in the GitHub repository
-- Review existing documentation and troubleshooting guides
-- Check traceability.json for test coverage
+
+- **Repository**: https://github.com/bibhuprasad0906-collab/Demo-POM
+- **Issues**: https://github.com/bibhuprasad0906-collab/Demo-POM/issues
 
 ## License
 
-This project is provided as-is for quality assurance purposes.
+This project is licensed under the MIT License.
+
+## Acknowledgments
+
+- Selenium WebDriver community
+- Pytest framework contributors
+- Page Object Model pattern advocates
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: 2024  
-**Maintained By**: Quality Engineering Team
+**Last Updated**: 2024
+**Version**: 1.0.0
+**Status**: Production Ready
