@@ -1,1 +1,1 @@
-"""Selenium Pytest Automation Framework - Source Package"""
+"""Source package initialization."""
