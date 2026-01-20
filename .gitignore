@@ -27,9 +27,9 @@ PIPFILE.lock
 venv/
 ENV/
 env/
-.venv
+.venv/
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
@@ -47,23 +47,40 @@ coverage.xml
 *.cover
 .hypothesis/
 
-# Logs
+# Logs and Reports
 logs/
 *.log
-
-# Screenshots
+reports/
+test_report.html
+assets/
 screenshots/
 
-# Reports
-report.html
-assets/
+# Selenium
+geckodriver.log
+chromedriver.log
 
-# Secrets (NEVER commit)
+# Environment Variables
 .env
+.env.local
+.env.*.local
+
+# Credentials (NEVER COMMIT)
+*credentials*
+*secrets*
+*token*
 *.pem
 *.key
-secrets.json
 
 # OS
 Thumbs.db
 .DS_Store
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# Allure
+allure-results/
+allure-report/
