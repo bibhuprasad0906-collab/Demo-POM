@@ -1,1 +1,1 @@
-"""Utilities package for configuration, driver management, and exceptions."""
+"""Utils package for configuration, driver factory, and custom exceptions."""
