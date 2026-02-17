@@ -1,271 +1,145 @@
-"""WebDriver factory module for creating and managing Selenium WebDriver instances.
+"""DriverFactory: Instantiates Selenium WebDriver.
+Supports Chrome, Firefox, Edge with headless mode and custom options."""
 
-Provides centralized driver creation with support for multiple browsers,
-headless mode, and custom options. Implements robust error handling and
-logging for driver lifecycle management.
-
-Supported Browsers:
-    - Chrome (default)
-    - Firefox
-
-Features:
-    - Automatic driver management (no manual driver downloads)
-    - Headless mode support
-    - Custom window size configuration
-    - Implicit wait configuration
-    - Page load timeout configuration
-    - Comprehensive logging
-"""
-
-import logging
-from typing import Optional
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
-from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.edge.service import Service as EdgeService
 from src.utils.config import Config
-from src.utils.exceptions import BrowserError, ConfigurationError
+import logging
+import os
 
 
 class DriverFactory:
-    """Factory class for creating WebDriver instances.
-    
-    This class provides static methods for creating and configuring
-    WebDriver instances based on the application configuration.
-    
-    Example:
-        >>> driver = DriverFactory.get_driver()
-        >>> driver.get("https://example.com")
-        >>> driver.quit()
-    """
-    
+    """Factory class for creating WebDriver instances."""
+
     @staticmethod
-    def _get_chrome_options() -> ChromeOptions:
-        """Configure Chrome options based on Config settings.
+    def get_driver():
+        """Returns a Selenium WebDriver instance based on configuration.
         
         Returns:
-            ChromeOptions: Configured Chrome options
+            WebDriver: Configured Selenium WebDriver instance
+            
+        Raises:
+            ValueError: If browser type is not supported
+        """
+        logger = logging.getLogger("DriverFactory")
+        browser = Config.BROWSER.lower()
+
+        logger.info(f"Initializing {browser} driver (headless={Config.HEADLESS})")
+
+        try:
+            if browser == "chrome":
+                driver = DriverFactory._get_chrome_driver()
+            elif browser == "firefox":
+                driver = DriverFactory._get_firefox_driver()
+            elif browser == "edge":
+                driver = DriverFactory._get_edge_driver()
+            else:
+                raise ValueError(f"Unsupported browser: {browser}. Supported: chrome, firefox, edge")
+
+            # Set timeouts
+            driver.implicitly_wait(Config.TIMEOUT)
+            driver.set_page_load_timeout(Config.PAGE_LOAD_TIMEOUT)
+
+            # Set window size
+            driver.set_window_size(Config.WINDOW_WIDTH, Config.WINDOW_HEIGHT)
+
+            logger.info(f"{browser.capitalize()} driver initialized successfully")
+            return driver
+
+        except Exception as e:
+            logger.error(f"Failed to initialize {browser} driver: {str(e)}")
+            raise
+
+    @staticmethod
+    def _get_chrome_driver():
+        """Create and configure Chrome WebDriver.
+        
+        Returns:
+            WebDriver: Chrome WebDriver instance
         """
         options = ChromeOptions()
-        
+
         # Headless mode
         if Config.HEADLESS:
             options.add_argument("--headless=new")
-            logging.info("Chrome headless mode enabled")
-        
-        # Window size
-        width, height = Config.WINDOW_SIZE.split(",")
-        options.add_argument(f"--window-size={width},{height}")
-        
+            options.add_argument("--disable-gpu")
+
         # Performance and stability options
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--disable-extensions")
         options.add_argument("--disable-infobars")
-        options.add_argument("--disable-notifications")
-        options.add_argument("--disable-popup-blocking")
-        
-        # Security and privacy
-        options.add_argument("--incognito")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option("useAutomationExtension", False)
-        
+        options.add_argument("--start-maximized")
+
         # Logging
-        options.add_argument("--log-level=3")  # Suppress verbose logging
+        options.add_argument("--log-level=3")
         options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        
-        logging.debug(f"Chrome options configured: {options.arguments}")
-        return options
-    
+
+        # User agent
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+
+        # Create driver
+        driver = webdriver.Chrome(options=options)
+        return driver
+
     @staticmethod
-    def _get_firefox_options() -> FirefoxOptions:
-        """Configure Firefox options based on Config settings.
+    def _get_firefox_driver():
+        """Create and configure Firefox WebDriver.
         
         Returns:
-            FirefoxOptions: Configured Firefox options
+            WebDriver: Firefox WebDriver instance
         """
         options = FirefoxOptions()
-        
+
         # Headless mode
         if Config.HEADLESS:
             options.add_argument("--headless")
-            logging.info("Firefox headless mode enabled")
-        
-        # Window size
-        width, height = Config.WINDOW_SIZE.split(",")
-        options.add_argument(f"--width={width}")
-        options.add_argument(f"--height={height}")
-        
-        # Performance and stability options
+
+        # Performance options
         options.add_argument("--disable-gpu")
-        options.add_argument("--disable-extensions")
-        
-        # Security and privacy
-        options.set_preference("browser.privatebrowsing.autostart", True)
-        options.set_preference("dom.webdriver.enabled", False)
-        options.set_preference("useAutomationExtension", False)
-        
-        # Logging
-        options.set_preference("devtools.console.stdout.content", False)
-        
-        logging.debug(f"Firefox options configured: {options.arguments}")
-        return options
-    
-    @staticmethod
-    def _create_chrome_driver() -> webdriver.Chrome:
-        """Create and configure Chrome WebDriver instance.
-        
-        Returns:
-            webdriver.Chrome: Configured Chrome driver
-        
-        Raises:
-            BrowserError: If Chrome driver creation fails
-        """
-        try:
-            options = DriverFactory._get_chrome_options()
-            driver = webdriver.Chrome(options=options)
-            logging.info("Chrome WebDriver created successfully")
-            return driver
-        except WebDriverException as e:
-            error_msg = f"Failed to create Chrome driver: {str(e)}"
-            logging.error(error_msg)
-            raise BrowserError(
-                error_msg,
-                context={"browser": "chrome", "error": str(e)}
-            )
-        except Exception as e:
-            error_msg = f"Unexpected error creating Chrome driver: {str(e)}"
-            logging.error(error_msg)
-            raise BrowserError(
-                error_msg,
-                context={"browser": "chrome", "error": str(e)}
-            )
-    
-    @staticmethod
-    def _create_firefox_driver() -> webdriver.Firefox:
-        """Create and configure Firefox WebDriver instance.
-        
-        Returns:
-            webdriver.Firefox: Configured Firefox driver
-        
-        Raises:
-            BrowserError: If Firefox driver creation fails
-        """
-        try:
-            options = DriverFactory._get_firefox_options()
-            driver = webdriver.Firefox(options=options)
-            logging.info("Firefox WebDriver created successfully")
-            return driver
-        except WebDriverException as e:
-            error_msg = f"Failed to create Firefox driver: {str(e)}"
-            logging.error(error_msg)
-            raise BrowserError(
-                error_msg,
-                context={"browser": "firefox", "error": str(e)}
-            )
-        except Exception as e:
-            error_msg = f"Unexpected error creating Firefox driver: {str(e)}"
-            logging.error(error_msg)
-            raise BrowserError(
-                error_msg,
-                context={"browser": "firefox", "error": str(e)}
-            )
-    
-    @staticmethod
-    def get_driver(browser: Optional[str] = None) -> webdriver.Remote:
-        """Create and configure WebDriver instance based on configuration.
-        
-        Args:
-            browser: Browser name (chrome/firefox). If None, uses Config.BROWSER
-        
-        Returns:
-            webdriver.Remote: Configured WebDriver instance
-        
-        Raises:
-            ConfigurationError: If browser is not supported
-            BrowserError: If driver creation fails
-        
-        Example:
-            >>> driver = DriverFactory.get_driver()
-            >>> driver.get("https://example.com")
-            >>> driver.quit()
-        """
-        browser_name = (browser or Config.BROWSER).lower()
-        
-        logging.info(f"Creating WebDriver for browser: {browser_name}")
-        
-        # Create driver based on browser
-        if browser_name == "chrome":
-            driver = DriverFactory._create_chrome_driver()
-        elif browser_name == "firefox":
-            driver = DriverFactory._create_firefox_driver()
-        else:
-            error_msg = f"Unsupported browser: {browser_name}. Supported browsers: chrome, firefox"
-            logging.error(error_msg)
-            raise ConfigurationError(
-                error_msg,
-                context={"browser": browser_name, "supported": ["chrome", "firefox"]}
-            )
-        
-        # Configure timeouts
-        try:
-            driver.implicitly_wait(Config.IMPLICIT_WAIT)
-            driver.set_page_load_timeout(Config.PAGE_LOAD_TIMEOUT)
-            logging.info(f"Timeouts configured - Implicit: {Config.IMPLICIT_WAIT}s, Page Load: {Config.PAGE_LOAD_TIMEOUT}s")
-        except Exception as e:
-            logging.warning(f"Failed to configure timeouts: {str(e)}")
-        
-        # Maximize window if not headless
-        if not Config.HEADLESS:
-            try:
-                driver.maximize_window()
-                logging.info("Browser window maximized")
-            except Exception as e:
-                logging.warning(f"Failed to maximize window: {str(e)}")
-        
-        logging.info(f"WebDriver ready - Browser: {browser_name}, Headless: {Config.HEADLESS}")
+        options.set_preference("browser.cache.disk.enable", False)
+        options.set_preference("browser.cache.memory.enable", False)
+        options.set_preference("browser.cache.offline.enable", False)
+        options.set_preference("network.http.use-cache", False)
+
+        # Create driver
+        driver = webdriver.Firefox(options=options)
         return driver
-    
+
     @staticmethod
-    def quit_driver(driver: webdriver.Remote) -> None:
-        """Safely quit WebDriver instance.
+    def _get_edge_driver():
+        """Create and configure Edge WebDriver.
         
-        Args:
-            driver: WebDriver instance to quit
-        
-        Example:
-            >>> driver = DriverFactory.get_driver()
-            >>> # ... use driver ...
-            >>> DriverFactory.quit_driver(driver)
+        Returns:
+            WebDriver: Edge WebDriver instance
         """
-        if driver:
-            try:
-                driver.quit()
-                logging.info("WebDriver quit successfully")
-            except Exception as e:
-                logging.warning(f"Error quitting driver: {str(e)}")
+        options = EdgeOptions()
+
+        # Headless mode
+        if Config.HEADLESS:
+            options.add_argument("--headless")
+            options.add_argument("--disable-gpu")
+
+        # Performance options
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-extensions")
+
+        # Create driver
+        driver = webdriver.Edge(options=options)
+        return driver
 
 
-def get_driver(browser: Optional[str] = None) -> webdriver.Remote:
-    """Convenience function to create WebDriver instance.
-    
-    This is a wrapper around DriverFactory.get_driver() for backward compatibility
-    and simplified imports.
-    
-    Args:
-        browser: Browser name (chrome/firefox). If None, uses Config.BROWSER
+def get_driver():
+    """Convenience function to get WebDriver instance.
     
     Returns:
-        webdriver.Remote: Configured WebDriver instance
-    
-    Example:
-        >>> from src.utils.driver_factory import get_driver
-        >>> driver = get_driver()
-        >>> driver.get("https://example.com")
-        >>> driver.quit()
+        WebDriver: Configured Selenium WebDriver instance
     """
-    return DriverFactory.get_driver(browser)
+    return DriverFactory.get_driver()
