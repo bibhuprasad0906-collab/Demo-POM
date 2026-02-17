@@ -1,108 +1,96 @@
 {
-  "description": "Traceability matrix mapping user stories to test cases",
-  "version": "1.0.0",
-  "last_updated": "2024-01-01",
-  "mappings": {
+  "metadata": {
+    "version": "1.0.0",
+    "generated": "2024-01-01",
+    "description": "Traceability matrix mapping user stories to test functions"
+  },
+  "traceability": {
     "AUTH-001": {
       "title": "Login with valid credentials on Web",
-      "test_cases": ["test_AUTH_001_login_valid_web"],
+      "test_functions": ["test_AUTH_001_002_valid_login"],
       "test_file": "tests/test_login.py",
       "priority": "P1",
-      "status": "implemented"
+      "status": "automated"
     },
     "AUTH-002": {
       "title": "Login with valid credentials on Mobile",
-      "test_cases": ["test_AUTH_002_login_valid_mobile"],
+      "test_functions": ["test_AUTH_001_002_valid_login"],
       "test_file": "tests/test_login.py",
       "priority": "P1",
-      "status": "implemented"
+      "status": "automated"
     },
     "AUTH-003": {
       "title": "Login with invalid credentials on Web",
-      "test_cases": ["test_AUTH_003_login_invalid_web"],
+      "test_functions": ["test_AUTH_003_004_invalid_login"],
       "test_file": "tests/test_login.py",
       "priority": "P1",
-      "status": "implemented"
+      "status": "automated"
     },
     "AUTH-004": {
       "title": "Login with invalid credentials on Mobile",
-      "test_cases": ["test_AUTH_004_login_invalid_mobile"],
+      "test_functions": ["test_AUTH_003_004_invalid_login"],
       "test_file": "tests/test_login.py",
       "priority": "P1",
-      "status": "implemented"
+      "status": "automated"
     },
     "AUTH-005": {
       "title": "Account lockout after repeated failed attempts on Web",
-      "test_cases": ["test_AUTH_005_account_lockout_web"],
+      "test_functions": ["test_AUTH_005_006_account_lockout"],
       "test_file": "tests/test_login.py",
       "priority": "P1",
-      "status": "implemented",
+      "status": "automated",
       "dependencies": ["AUTH-003"]
     },
     "AUTH-006": {
       "title": "Account lockout after repeated failed attempts on Mobile",
-      "test_cases": ["test_AUTH_006_account_lockout_mobile"],
+      "test_functions": ["test_AUTH_005_006_account_lockout"],
       "test_file": "tests/test_login.py",
       "priority": "P1",
-      "status": "implemented",
+      "status": "automated",
       "dependencies": ["AUTH-004"]
     },
     "AUTH-007": {
-      "title": "Locked user login attempt on Web",
-      "test_cases": ["test_AUTH_007_locked_user_login_web"],
+      "title": "Login attempt with locked account on Web",
+      "test_functions": ["test_AUTH_007_008_locked_account_login"],
       "test_file": "tests/test_login.py",
       "priority": "P1",
-      "status": "implemented",
+      "status": "automated",
       "dependencies": ["AUTH-005"]
     },
     "AUTH-008": {
-      "title": "Locked user login attempt on Mobile",
-      "test_cases": ["test_AUTH_008_locked_user_login_mobile"],
+      "title": "Login attempt with locked account on Mobile",
+      "test_functions": ["test_AUTH_007_008_locked_account_login"],
       "test_file": "tests/test_login.py",
       "priority": "P1",
-      "status": "implemented",
+      "status": "automated",
       "dependencies": ["AUTH-006"]
     },
     "AUTH-009": {
       "title": "Password visibility toggle on Web",
-      "test_cases": ["test_AUTH_009_password_visibility_toggle_web"],
+      "test_functions": ["test_AUTH_009_password_visibility_toggle_web"],
       "test_file": "tests/test_login.py",
       "priority": "P2",
-      "status": "implemented"
+      "status": "automated"
     },
     "AUTH-010": {
       "title": "Password visibility toggle on Mobile",
-      "test_cases": ["test_AUTH_010_password_visibility_toggle_mobile"],
+      "test_functions": ["test_AUTH_010_password_visibility_toggle_mobile"],
       "test_file": "tests/test_login.py",
       "priority": "P2",
-      "status": "implemented"
+      "status": "automated"
     },
     "AUTH-011": {
       "title": "Audit login attempts",
-      "test_cases": ["test_AUTH_011_audit_login_attempts"],
+      "test_functions": ["test_AUTH_011_audit_login_attempt"],
       "test_file": "tests/test_login.py",
       "priority": "P1",
-      "status": "implemented",
-      "dependencies": ["AUTH-001", "AUTH-002", "AUTH-003", "AUTH-004", "AUTH-005", "AUTH-006", "AUTH-007", "AUTH-008"]
+      "status": "automated",
+      "notes": "UI verification only - full audit log verification requires backend/API integration"
     }
   },
-  "coverage_summary": {
+  "coverage": {
     "total_stories": 11,
-    "implemented": 11,
-    "pending": 0,
+    "automated_stories": 11,
     "coverage_percentage": 100
-  },
-  "test_execution_order": [
-    "AUTH-001",
-    "AUTH-002",
-    "AUTH-003",
-    "AUTH-004",
-    "AUTH-005",
-    "AUTH-006",
-    "AUTH-007",
-    "AUTH-008",
-    "AUTH-009",
-    "AUTH-010",
-    "AUTH-011"
-  ]
+  }
 }
