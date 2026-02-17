@@ -1,445 +1,171 @@
-"""LoginPage: Page object for login functionality.
+"""LoginPage: Page Object for login functionality.
+Implements robust error handling for login, password toggle, and error messages."""
 
-Implements robust error handling, performance monitoring, and exposes
-all login operations including valid/invalid login, account lockout,
-and password visibility toggle.
-
-Features:
-    - Valid and invalid credential handling
-    - Account lockout detection
-    - Password visibility toggle
-    - Response time monitoring
-    - Comprehensive error handling
-    - Security-compliant logging (no credential exposure)
-"""
-
-import logging
-import time
-from typing import Optional, Dict, Any
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from src.pages.base_page import BasePage
-from src.utils.config import Config
-from src.utils.exceptions import (
-    LoginFailedError,
-    AccountLockedError,
-    ElementNotFoundError,
-    PerformanceThresholdExceededError
-)
+from src.utils.exceptions import LoginFailedError, ElementNotFoundError
+import time
+import logging
 
 
 class LoginPage(BasePage):
-    """Page object for login functionality.
-    
-    Provides methods for all login-related operations including
-    successful login, failed login, account lockout, and password
-    visibility toggle.
-    
-    Locators:
-        Update these locators to match your application's actual DOM structure.
-    
-    Example:
-        >>> login_page = LoginPage(driver)
-        >>> result = login_page.login("testuser", "password123")
-        >>> assert result["success"] is True
-    """
-    
-    # Locators - Update these according to your application's DOM
+    """Page object for login page with comprehensive error handling."""
+
+    # Locators - Update these based on actual application UI
     USERNAME_INPUT = (By.ID, "username")
     PASSWORD_INPUT = (By.ID, "password")
     LOGIN_BUTTON = (By.ID, "loginBtn")
     ERROR_MESSAGE = (By.ID, "errorMsg")
-    DASHBOARD_INDICATOR = (By.ID, "dashboard")
+    LOCKOUT_MESSAGE = (By.ID, "lockoutMsg")
+    DASHBOARD = (By.ID, "dashboard")
     PASSWORD_TOGGLE = (By.ID, "passwordToggle")
-    ACCOUNT_LOCKED_MESSAGE = (By.ID, "lockedMsg")
-    LOADING_INDICATOR = (By.CLASS_NAME, "loading")
-    
-    def __init__(self, driver: WebDriver, timeout: Optional[int] = None):
-        """Initialize LoginPage.
+
+    def __init__(self, driver):
+        """Initialize LoginPage with WebDriver.
         
         Args:
             driver: Selenium WebDriver instance
-            timeout: Optional custom timeout
         """
-        super().__init__(driver, timeout)
-        logging.info("LoginPage initialized")
-    
-    def navigate_to_login(self, url: Optional[str] = None) -> None:
-        """Navigate to login page.
+        super().__init__(driver)
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+    def open(self, base_url):
+        """Open login page.
         
         Args:
-            url: Optional custom URL. If None, uses Config.BASE_URL
-        """
-        login_url = url or Config.BASE_URL
-        self.driver.get(login_url)
-        self.wait_for_page_load()
-        logging.info(f"Navigated to login page: {login_url}")
-    
-    def enter_username(self, username: str) -> None:
-        """Enter username in the username field.
-        
-        Args:
-            username: Username to enter
-        
-        Raises:
-            ElementNotFoundError: If username field is not found
-        """
-        self.enter_text(self.USERNAME_INPUT, username)
-        logging.info(f"Entered username: {username[:3]}***")  # Partial sanitization
-    
-    def enter_password(self, password: str) -> None:
-        """Enter password in the password field.
-        
-        Args:
-            password: Password to enter
-        
-        Raises:
-            ElementNotFoundError: If password field is not found
-        
-        Security Note:
-            Password is never logged in plain text.
-        """
-        self.enter_text(self.PASSWORD_INPUT, password)
-        logging.info("Entered password: ***")  # Never log actual password
-    
-    def click_login_button(self) -> None:
-        """Click the login button.
-        
-        Raises:
-            ElementNotFoundError: If login button is not found
-            ElementNotInteractableError: If login button is not clickable
-        """
-        self.click(self.LOGIN_BUTTON)
-        logging.info("Clicked login button")
-    
-    def wait_for_loading_complete(self, timeout: int = 5) -> None:
-        """Wait for loading indicator to disappear.
-        
-        Args:
-            timeout: Maximum time to wait for loading to complete
+            base_url: Base URL of the application
         """
         try:
-            if self.is_element_present(self.LOADING_INDICATOR, timeout=1):
-                # Wait for loading indicator to disappear
-                from selenium.webdriver.support import expected_conditions as EC
-                from selenium.webdriver.support.ui import WebDriverWait
-                WebDriverWait(self.driver, timeout).until(
-                    EC.invisibility_of_element_located(self.LOADING_INDICATOR)
-                )
-                logging.debug("Loading complete")
+            self.driver.get(base_url)
+            self.logger.info(f"Opened login page: {base_url}")
         except Exception as e:
-            logging.debug(f"No loading indicator or already complete: {str(e)}")
-    
-    def is_dashboard_displayed(self, timeout: int = 5) -> bool:
-        """Check if dashboard is displayed after login.
-        
-        Args:
-            timeout: Maximum time to wait for dashboard
-        
-        Returns:
-            bool: True if dashboard is displayed, False otherwise
-        """
-        try:
-            return self.is_element_visible(self.DASHBOARD_INDICATOR, timeout=timeout)
-        except Exception:
-            return False
-    
-    def is_error_displayed(self, timeout: int = 3) -> bool:
-        """Check if error message is displayed.
-        
-        Args:
-            timeout: Maximum time to wait for error message
-        
-        Returns:
-            bool: True if error message is present and visible
-        """
-        try:
-            return self.is_element_visible(self.ERROR_MESSAGE, timeout=timeout)
-        except Exception:
-            return False
-    
-    def get_error_message(self) -> Optional[str]:
-        """Get the error message text.
-        
-        Returns:
-            Optional[str]: Error message text or None if not found
-        """
-        try:
-            return self.get_text(self.ERROR_MESSAGE, timeout=2)
-        except ElementNotFoundError:
-            return None
-    
-    def is_account_locked(self, timeout: int = 3) -> bool:
-        """Check if account locked message is displayed.
-        
-        Args:
-            timeout: Maximum time to wait for locked message
-        
-        Returns:
-            bool: True if locked message is present and visible
-        """
-        try:
-            return self.is_element_visible(self.ACCOUNT_LOCKED_MESSAGE, timeout=timeout)
-        except Exception:
-            return False
-    
-    def get_account_locked_message(self) -> Optional[str]:
-        """Get the account locked message text.
-        
-        Returns:
-            Optional[str]: Locked message text or None if not found
-        """
-        try:
-            return self.get_text(self.ACCOUNT_LOCKED_MESSAGE, timeout=2)
-        except ElementNotFoundError:
-            return None
-    
-    def login(self, username: str, password: str, expected_success: bool = True) -> Dict[str, Any]:
-        """Attempt to log in with provided credentials.
+            self.logger.error(f"Failed to open login page: {base_url}")
+            raise
+
+    def login(self, username, password):
+        """Perform login with comprehensive error handling.
         
         Args:
             username: Username for login
             password: Password for login
-            expected_success: Whether login is expected to succeed
-        
+            
         Returns:
-            Dict containing:
-                - success: bool - Whether login succeeded
-                - response_time: float - Time taken for login operation
-                - message: str - Success or error message
-                - locked: bool - Whether account is locked
-        
+            bool: True if login successful and dashboard visible
+            
         Raises:
-            LoginFailedError: If login fails and expected_success is True
-            AccountLockedError: If account is locked
-        
-        Example:
-            >>> result = login_page.login("testuser", "password123")
-            >>> assert result["success"] is True
-            >>> assert result["response_time"] < 2.0
+            LoginFailedError: If login fails due to invalid credentials or account lockout
         """
-        start_time = time.time()
-        
         try:
+            self.logger.info(f"Attempting login for user: {username}")
+            
             # Enter credentials
-            self.enter_username(username)
-            self.enter_password(password)
+            self.enter_text(self.USERNAME_INPUT, username)
+            self.enter_text(self.PASSWORD_INPUT, password)
             
-            # Click login
-            self.click_login_button()
+            # Click login button
+            self.click_element(self.LOGIN_BUTTON)
             
-            # Wait for loading to complete
-            self.wait_for_loading_complete()
+            # Wait for response (dashboard, error, or lockout)
+            start_time = time.time()
+            timeout = 5  # 5 seconds timeout for login response
             
-            # Check for account lockout first
-            if self.is_account_locked(timeout=2):
-                elapsed = time.time() - start_time
-                locked_msg = self.get_account_locked_message() or "Account is locked"
-                logging.warning(f"Account locked: {username[:3]}***")
+            while time.time() - start_time < timeout:
+                # Check for successful login (dashboard visible)
+                if self.is_element_visible(self.DASHBOARD, timeout=1):
+                    self.logger.info(f"Login successful for user: {username}")
+                    return True
                 
-                if expected_success:
-                    raise AccountLockedError(
-                        locked_msg,
-                        context={
-                            "username": f"{username[:3]}***",
-                            "response_time": elapsed
-                        }
-                    )
+                # Check for error message
+                if self.is_element_visible(self.ERROR_MESSAGE, timeout=1):
+                    error_msg = self.get_element_text(self.ERROR_MESSAGE)
+                    self.logger.error(f"Login failed: {error_msg}")
+                    raise LoginFailedError(f"Invalid credentials: {error_msg}")
                 
-                return {
-                    "success": False,
-                    "response_time": elapsed,
-                    "message": locked_msg,
-                    "locked": True
-                }
-            
-            # Check for dashboard (successful login)
-            if self.is_dashboard_displayed(timeout=Config.LOGIN_RESPONSE_TIME_THRESHOLD):
-                elapsed = time.time() - start_time
-                logging.info(f"Login successful for user: {username[:3]}*** (Response time: {elapsed:.2f}s)")
+                # Check for lockout message
+                if self.is_element_visible(self.LOCKOUT_MESSAGE, timeout=1):
+                    lockout_msg = self.get_element_text(self.LOCKOUT_MESSAGE)
+                    self.logger.error(f"Account locked: {lockout_msg}")
+                    raise LoginFailedError(f"Account locked: {lockout_msg}")
                 
-                # Check performance threshold
-                if elapsed > Config.LOGIN_RESPONSE_TIME_THRESHOLD:
-                    logging.warning(
-                        f"Login response time exceeded threshold: {elapsed:.2f}s > {Config.LOGIN_RESPONSE_TIME_THRESHOLD}s"
-                    )
-                    if expected_success:
-                        raise PerformanceThresholdExceededError(
-                            f"Login response time exceeded: {elapsed:.2f}s",
-                            context={
-                                "actual": elapsed,
-                                "threshold": Config.LOGIN_RESPONSE_TIME_THRESHOLD,
-                                "unit": "seconds"
-                            }
-                        )
-                
-                return {
-                    "success": True,
-                    "response_time": elapsed,
-                    "message": "Login successful",
-                    "locked": False
-                }
+                time.sleep(0.2)
             
-            # Check for error message (failed login)
-            if self.is_error_displayed(timeout=2):
-                elapsed = time.time() - start_time
-                error_msg = self.get_error_message() or "Invalid credentials"
-                logging.warning(f"Login failed for user: {username[:3]}*** - {error_msg}")
-                
-                if expected_success:
-                    raise LoginFailedError(
-                        error_msg,
-                        context={
-                            "username": f"{username[:3]}***",
-                            "response_time": elapsed
-                        }
-                    )
-                
-                return {
-                    "success": False,
-                    "response_time": elapsed,
-                    "message": error_msg,
-                    "locked": False
-                }
+            # Timeout - no response received
+            self.logger.error("Login response timeout")
+            raise LoginFailedError("Login response timeout - no dashboard, error, or lockout message")
             
-            # Unknown state - neither dashboard nor error
-            elapsed = time.time() - start_time
-            error_msg = "Login outcome unclear - neither dashboard nor error displayed"
-            logging.error(error_msg)
-            
-            if expected_success:
-                raise LoginFailedError(
-                    error_msg,
-                    context={
-                        "username": f"{username[:3]}***",
-                        "response_time": elapsed,
-                        "current_url": self.get_current_url()
-                    }
-                )
-            
-            return {
-                "success": False,
-                "response_time": elapsed,
-                "message": error_msg,
-                "locked": False
-            }
-        
-        except (LoginFailedError, AccountLockedError, PerformanceThresholdExceededError):
-            # Re-raise expected exceptions
+        except LoginFailedError:
             raise
         except Exception as e:
-            elapsed = time.time() - start_time
-            error_msg = f"Unexpected error during login: {str(e)}"
-            logging.error(error_msg)
-            
-            if expected_success:
-                raise LoginFailedError(
-                    error_msg,
-                    context={
-                        "username": f"{username[:3]}***",
-                        "response_time": elapsed,
-                        "error": str(e)
-                    }
-                )
-            
-            return {
-                "success": False,
-                "response_time": elapsed,
-                "message": error_msg,
-                "locked": False
-            }
-    
-    def toggle_password_visibility(self) -> bool:
-        """Toggle password visibility.
+            self.logger.error(f"Unexpected error during login: {str(e)}")
+            raise LoginFailedError(f"Login failed with unexpected error: {str(e)}") from e
+
+    def get_error_message(self):
+        """Return error message text if visible.
         
         Returns:
-            bool: True if toggle succeeded and input type changed
-        
-        Raises:
-            ElementNotFoundError: If password toggle is not found
-        
-        Example:
-            >>> login_page.enter_password("secret")
-            >>> assert login_page.toggle_password_visibility() is True
+            str: Error message text, or None if not visible
         """
         try:
-            # Get initial password field type
-            initial_type = self.get_attribute(self.PASSWORD_INPUT, "type")
-            logging.debug(f"Initial password field type: {initial_type}")
-            
-            # Click toggle
-            self.click(self.PASSWORD_TOGGLE)
-            time.sleep(0.3)  # Brief pause for toggle animation
-            
-            # Get new password field type
-            new_type = self.get_attribute(self.PASSWORD_INPUT, "type")
-            logging.debug(f"New password field type: {new_type}")
-            
-            # Verify type changed
-            if initial_type != new_type and new_type in ["text", "password"]:
-                logging.info(f"Password visibility toggled: {initial_type} -> {new_type}")
-                return True
-            else:
-                logging.warning(f"Password visibility toggle may have failed: {initial_type} -> {new_type}")
-                return False
-        
-        except Exception as e:
-            logging.error(f"Password visibility toggle failed: {str(e)}")
-            raise ElementNotFoundError(
-                f"Failed to toggle password visibility: {str(e)}",
-                context={"error": str(e)}
-            )
-    
-    def attempt_multiple_failed_logins(self, username: str, password: str, attempts: int) -> Dict[str, Any]:
-        """Attempt multiple failed logins to trigger account lockout.
-        
-        Args:
-            username: Username for login attempts
-            password: Incorrect password
-            attempts: Number of failed attempts to make
+            if self.is_element_visible(self.ERROR_MESSAGE, timeout=2):
+                return self.get_element_text(self.ERROR_MESSAGE)
+            return None
+        except ElementNotFoundError:
+            return None
+
+    def get_lockout_message(self):
+        """Return lockout message text if visible.
         
         Returns:
-            Dict containing:
-                - locked: bool - Whether account was locked
-                - attempts_made: int - Number of attempts made before lockout
-                - final_message: str - Final error or lockout message
-        
-        Example:
-            >>> result = login_page.attempt_multiple_failed_logins("testuser", "wrong", 5)
-            >>> assert result["locked"] is True
+            str: Lockout message text, or None if not visible
         """
-        logging.info(f"Attempting {attempts} failed logins for user: {username[:3]}***")
+        try:
+            if self.is_element_visible(self.LOCKOUT_MESSAGE, timeout=2):
+                return self.get_element_text(self.LOCKOUT_MESSAGE)
+            return None
+        except ElementNotFoundError:
+            return None
+
+    def toggle_password_visibility(self):
+        """Toggle password visibility and return input type.
         
-        for attempt in range(1, attempts + 1):
-            logging.debug(f"Failed login attempt {attempt}/{attempts}")
+        Returns:
+            str: Password input type after toggle ('text' or 'password')
             
-            try:
-                result = self.login(username, password, expected_success=False)
-                
-                if result["locked"]:
-                    logging.info(f"Account locked after {attempt} attempts")
-                    return {
-                        "locked": True,
-                        "attempts_made": attempt,
-                        "final_message": result["message"]
-                    }
-            
-            except AccountLockedError as e:
-                logging.info(f"Account locked after {attempt} attempts")
-                return {
-                    "locked": True,
-                    "attempts_made": attempt,
-                    "final_message": str(e)
-                }
-            
-            # Brief pause between attempts
-            if attempt < attempts:
-                time.sleep(0.5)
+        Raises:
+            ElementNotFoundError: If toggle button or password input not found
+        """
+        try:
+            self.logger.info("Toggling password visibility")
+            self.click_element(self.PASSWORD_TOGGLE)
+            input_type = self.get_element_attribute(self.PASSWORD_INPUT, "type")
+            self.logger.info(f"Password input type after toggle: {input_type}")
+            return input_type
+        except Exception as e:
+            self.logger.error("Failed to toggle password visibility")
+            raise ElementNotFoundError("Failed to toggle password visibility") from e
+
+    def is_dashboard_visible(self):
+        """Check if dashboard is visible after login.
         
-        # All attempts completed without lockout
-        logging.warning(f"Account not locked after {attempts} failed attempts")
-        return {
-            "locked": False,
-            "attempts_made": attempts,
-            "final_message": "Account not locked after maximum attempts"
-        }
+        Returns:
+            bool: True if dashboard visible, False otherwise
+        """
+        return self.is_element_visible(self.DASHBOARD, timeout=2)
+
+    def is_error_displayed(self):
+        """Check if error message is displayed.
+        
+        Returns:
+            bool: True if error message visible, False otherwise
+        """
+        return self.is_element_visible(self.ERROR_MESSAGE, timeout=2)
+
+    def is_lockout_displayed(self):
+        """Check if lockout message is displayed.
+        
+        Returns:
+            bool: True if lockout message visible, False otherwise
+        """
+        return self.is_element_visible(self.LOCKOUT_MESSAGE, timeout=2)
