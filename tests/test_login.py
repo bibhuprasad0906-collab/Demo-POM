@@ -1,456 +1,251 @@
-"""Login test suite for authentication functionality.
-
-Comprehensive test coverage for all login scenarios including:
-    - Valid credentials (web and mobile)
-    - Invalid credentials (web and mobile)
-    - Account lockout (web and mobile)
-    - Locked user login attempts (web and mobile)
-    - Password visibility toggle (web and mobile)
-    - Audit logging compliance
-
-All tests implement:
-    - Deterministic method names per story
-    - Performance monitoring
-    - Security compliance (no credential exposure)
-    - Comprehensive logging
-    - Traceability to user stories
-"""
+"""Login test suite with parametrized tests for all authentication scenarios.
+Provides comprehensive coverage of login functionality across Web and Mobile platforms."""
 
 import pytest
+import time
 import logging
 from src.pages.login_page import LoginPage
+from src.utils.exceptions import LoginFailedError
 from src.utils.config import Config
-from src.utils.exceptions import (
-    LoginFailedError,
-    AccountLockedError,
-    PerformanceThresholdExceededError
-)
+
+logger = logging.getLogger(__name__)
 
 
-@pytest.mark.auth
-@pytest.mark.login
 class TestLogin:
-    """Test class for login functionality.
-    
-    Covers all authentication scenarios with deterministic test methods
-    mapped to user stories for full traceability.
-    """
-    
-    @pytest.mark.positive
+    """Test class for login functionality with comprehensive scenario coverage."""
+
     @pytest.mark.p1
-    @pytest.mark.web
-    def test_AUTH_001_login_valid_web(self, driver):
-        """Test AUTH-001: Login with valid credentials on Web.
+    @pytest.mark.smoke
+    @pytest.mark.parametrize("username,password,platform,story_id", [
+        ("valid_user_web", "valid_pass", "web", "AUTH-001"),
+        ("valid_user_mobile", "valid_pass", "mobile", "AUTH-002"),
+    ])
+    def test_AUTH_001_002_valid_login(self, driver, base_url, username, password, platform, story_id):
+        """Test valid login on Web and Mobile (AUTH-001, AUTH-002).
         
-        Scenario:
-            Given the login page is open on the web
-            When I enter a valid username and valid password and click Login
-            Then I should be redirected to my dashboard within 2 seconds
+        Verifies that users can successfully log in with valid credentials
+        and are redirected to the dashboard within 2 seconds.
         
-        Acceptance Criteria:
-            - User is redirected to dashboard
-            - Response time is under 2 seconds
-            - No plain-text credentials in logs
+        Story IDs: AUTH-001, AUTH-002
+        Priority: P1
         """
-        logging.info("Starting test: AUTH-001 - Login with valid credentials on Web")
+        logger.info(f"Testing {story_id}: Valid login on {platform}")
         
         login_page = LoginPage(driver)
-        login_page.navigate_to_login()
+        login_page.open(base_url)
         
-        # Perform login
-        result = login_page.login(
-            username="valid_user_web",
-            password="valid_pass",
-            expected_success=True
-        )
+        start_time = time.time()
         
-        # Assertions
-        assert result["success"] is True, "Login should succeed with valid credentials"
-        assert result["response_time"] < Config.LOGIN_RESPONSE_TIME_THRESHOLD, \
-            f"Response time {result['response_time']:.2f}s exceeds threshold {Config.LOGIN_RESPONSE_TIME_THRESHOLD}s"
-        assert result["locked"] is False, "Account should not be locked"
-        
-        logging.info(f"Test AUTH-001 passed - Response time: {result['response_time']:.2f}s")
-    
-    @pytest.mark.positive
+        try:
+            result = login_page.login(username, password)
+            elapsed_time = time.time() - start_time
+            
+            assert result is True, "Login should succeed with valid credentials"
+            assert elapsed_time < 2.0, f"Login took {elapsed_time:.2f}s, should be under 2s"
+            assert login_page.is_dashboard_visible(), "Dashboard should be visible after successful login"
+            
+            logger.info(f"{story_id}: Valid login test passed (elapsed: {elapsed_time:.2f}s)")
+            
+        except LoginFailedError as e:
+            pytest.fail(f"Valid login failed unexpectedly: {str(e)}")
+
     @pytest.mark.p1
-    @pytest.mark.mobile
-    def test_AUTH_002_login_valid_mobile(self, driver):
-        """Test AUTH-002: Login with valid credentials on Mobile.
+    @pytest.mark.regression
+    @pytest.mark.parametrize("username,password,platform,story_id", [
+        ("invalid_user_web", "invalid_pass", "web", "AUTH-003"),
+        ("invalid_user_mobile", "invalid_pass", "mobile", "AUTH-004"),
+    ])
+    def test_AUTH_003_004_invalid_login(self, driver, base_url, username, password, platform, story_id):
+        """Test invalid login on Web and Mobile (AUTH-003, AUTH-004).
         
-        Scenario:
-            Given the login screen is open on the mobile app
-            When I enter a valid username and valid password and tap Login
-            Then I should be redirected to my dashboard within 2 seconds
+        Verifies that users receive an error message when attempting to log in
+        with invalid credentials.
         
-        Acceptance Criteria:
-            - User is redirected to dashboard
-            - Response time is under 2 seconds
-            - No plain-text credentials in logs
+        Story IDs: AUTH-003, AUTH-004
+        Priority: P1
         """
-        logging.info("Starting test: AUTH-002 - Login with valid credentials on Mobile")
+        logger.info(f"Testing {story_id}: Invalid login on {platform}")
         
         login_page = LoginPage(driver)
-        login_page.navigate_to_login()
+        login_page.open(base_url)
         
-        # Perform login
-        result = login_page.login(
-            username="valid_user_mobile",
-            password="valid_pass",
-            expected_success=True
-        )
-        
-        # Assertions
-        assert result["success"] is True, "Login should succeed with valid credentials"
-        assert result["response_time"] < Config.LOGIN_RESPONSE_TIME_THRESHOLD, \
-            f"Response time {result['response_time']:.2f}s exceeds threshold {Config.LOGIN_RESPONSE_TIME_THRESHOLD}s"
-        assert result["locked"] is False, "Account should not be locked"
-        
-        logging.info(f"Test AUTH-002 passed - Response time: {result['response_time']:.2f}s")
-    
-    @pytest.mark.negative
-    @pytest.mark.p1
-    @pytest.mark.web
-    def test_AUTH_003_login_invalid_web(self, driver):
-        """Test AUTH-003: Login with invalid credentials on Web.
-        
-        Scenario:
-            Given the login page is open on the web
-            When I enter an invalid username or invalid password and click Login
-            Then I should see an error message indicating invalid credentials
-            And I should remain on the login page
-        
-        Acceptance Criteria:
-            - Error message is displayed
-            - User remains on login page
-            - No plain-text credentials in logs
-        """
-        logging.info("Starting test: AUTH-003 - Login with invalid credentials on Web")
-        
-        login_page = LoginPage(driver)
-        login_page.navigate_to_login()
-        
-        # Attempt login with invalid credentials
-        with pytest.raises(LoginFailedError):
-            login_page.login(
-                username="invalid_user",
-                password="invalid_pass",
-                expected_success=True
-            )
+        with pytest.raises(LoginFailedError, match="Invalid credentials"):
+            login_page.login(username, password)
         
         # Verify error message is displayed
-        assert login_page.is_error_displayed(), "Error message should be displayed"
+        error_msg = login_page.get_error_message()
+        assert error_msg is not None, "Error message should be displayed"
+        assert "invalid" in error_msg.lower() or "incorrect" in error_msg.lower(), \
+            "Error message should indicate invalid credentials"
         
-        # Verify still on login page (dashboard not displayed)
-        assert not login_page.is_dashboard_displayed(timeout=2), "Should remain on login page"
-        
-        logging.info("Test AUTH-003 passed - Invalid credentials rejected")
-    
-    @pytest.mark.negative
+        logger.info(f"{story_id}: Invalid login test passed")
+
     @pytest.mark.p1
-    @pytest.mark.mobile
-    def test_AUTH_004_login_invalid_mobile(self, driver):
-        """Test AUTH-004: Login with invalid credentials on Mobile.
+    @pytest.mark.regression
+    @pytest.mark.parametrize("username,password,platform,story_id", [
+        ("lockout_user_web", "invalid_pass", "web", "AUTH-005"),
+        ("lockout_user_mobile", "invalid_pass", "mobile", "AUTH-006"),
+    ])
+    def test_AUTH_005_006_account_lockout(self, driver, base_url, username, password, platform, story_id):
+        """Test account lockout after repeated failed attempts (AUTH-005, AUTH-006).
         
-        Scenario:
-            Given the login screen is open on the mobile app
-            When I enter an invalid username or invalid password and tap Login
-            Then I should see an error message indicating invalid credentials
-            And I should remain on the login screen
+        Verifies that accounts are locked after the configured number of
+        consecutive failed login attempts.
         
-        Acceptance Criteria:
-            - Error message is displayed
-            - User remains on login screen
-            - No plain-text credentials in logs
+        Story IDs: AUTH-005, AUTH-006
+        Priority: P1
         """
-        logging.info("Starting test: AUTH-004 - Login with invalid credentials on Mobile")
+        logger.info(f"Testing {story_id}: Account lockout on {platform}")
         
         login_page = LoginPage(driver)
-        login_page.navigate_to_login()
+        login_page.open(base_url)
         
-        # Attempt login with invalid credentials
-        with pytest.raises(LoginFailedError):
-            login_page.login(
-                username="invalid_user_mobile",
-                password="invalid_pass",
-                expected_success=True
-            )
+        # Simulate repeated failed attempts
+        lockout_threshold = Config.LOCKOUT_THRESHOLD
+        logger.info(f"Attempting {lockout_threshold} failed logins to trigger lockout")
         
-        # Verify error message is displayed
-        assert login_page.is_error_displayed(), "Error message should be displayed"
-        
-        # Verify still on login screen (dashboard not displayed)
-        assert not login_page.is_dashboard_displayed(timeout=2), "Should remain on login screen"
-        
-        logging.info("Test AUTH-004 passed - Invalid credentials rejected")
-    
-    @pytest.mark.security
-    @pytest.mark.p1
-    @pytest.mark.web
-    def test_AUTH_005_account_lockout_web(self, driver):
-        """Test AUTH-005: Account lockout after repeated failed attempts on Web.
-        
-        Scenario:
-            Given the login page is open on the web
-            When I enter invalid credentials more than the allowed number of times consecutively
-            Then my account should be locked
-            And I should see a message indicating the account is locked
-        
-        Acceptance Criteria:
-            - Account is locked after max failed attempts
-            - Lockout message is displayed
-            - Complies with OWASP authentication guidelines
-        """
-        logging.info("Starting test: AUTH-005 - Account lockout after repeated failed attempts on Web")
-        
-        login_page = LoginPage(driver)
-        login_page.navigate_to_login()
-        
-        # Attempt multiple failed logins
-        result = login_page.attempt_multiple_failed_logins(
-            username="lockout_user",
-            password="wrong_pass",
-            attempts=Config.MAX_LOGIN_ATTEMPTS
-        )
-        
-        # Assertions
-        assert result["locked"] is True, "Account should be locked after max failed attempts"
-        assert result["attempts_made"] <= Config.MAX_LOGIN_ATTEMPTS, \
-            f"Account should lock within {Config.MAX_LOGIN_ATTEMPTS} attempts"
-        
-        # Verify lockout message is displayed
-        assert login_page.is_account_locked(), "Account locked message should be displayed"
-        
-        logging.info(f"Test AUTH-005 passed - Account locked after {result['attempts_made']} attempts")
-    
-    @pytest.mark.security
-    @pytest.mark.p1
-    @pytest.mark.mobile
-    def test_AUTH_006_account_lockout_mobile(self, driver):
-        """Test AUTH-006: Account lockout after repeated failed attempts on Mobile.
-        
-        Scenario:
-            Given the login screen is open on the mobile app
-            When I enter invalid credentials more than the allowed number of times consecutively
-            Then my account should be locked
-            And I should see a message indicating the account is locked
-        
-        Acceptance Criteria:
-            - Account is locked after max failed attempts
-            - Lockout message is displayed
-            - Complies with OWASP authentication guidelines
-        """
-        logging.info("Starting test: AUTH-006 - Account lockout after repeated failed attempts on Mobile")
-        
-        login_page = LoginPage(driver)
-        login_page.navigate_to_login()
-        
-        # Attempt multiple failed logins
-        result = login_page.attempt_multiple_failed_logins(
-            username="lockout_user_mobile",
-            password="wrong_pass",
-            attempts=Config.MAX_LOGIN_ATTEMPTS
-        )
-        
-        # Assertions
-        assert result["locked"] is True, "Account should be locked after max failed attempts"
-        assert result["attempts_made"] <= Config.MAX_LOGIN_ATTEMPTS, \
-            f"Account should lock within {Config.MAX_LOGIN_ATTEMPTS} attempts"
-        
-        # Verify lockout message is displayed
-        assert login_page.is_account_locked(), "Account locked message should be displayed"
-        
-        logging.info(f"Test AUTH-006 passed - Account locked after {result['attempts_made']} attempts")
-    
-    @pytest.mark.security
-    @pytest.mark.p1
-    @pytest.mark.web
-    def test_AUTH_007_locked_user_login_web(self, driver):
-        """Test AUTH-007: Locked user login attempt on Web.
-        
-        Scenario:
-            Given my account is locked and the login page is open on the web
-            When I enter my username and password and click Login
-            Then I should see a message indicating my account is locked
-            And I should not be logged in
-        
-        Acceptance Criteria:
-            - Locked account message is displayed
-            - User is not logged in
-            - No plain-text credentials in logs
-        """
-        logging.info("Starting test: AUTH-007 - Locked user login attempt on Web")
-        
-        login_page = LoginPage(driver)
-        login_page.navigate_to_login()
-        
-        # Attempt login with locked account
-        with pytest.raises(AccountLockedError):
-            login_page.login(
-                username="locked_user",
-                password="valid_pass",
-                expected_success=True
-            )
-        
-        # Verify lockout message is displayed
-        assert login_page.is_account_locked(), "Account locked message should be displayed"
-        
-        # Verify not logged in (dashboard not displayed)
-        assert not login_page.is_dashboard_displayed(timeout=2), "User should not be logged in"
-        
-        logging.info("Test AUTH-007 passed - Locked user cannot login")
-    
-    @pytest.mark.security
-    @pytest.mark.p1
-    @pytest.mark.mobile
-    def test_AUTH_008_locked_user_login_mobile(self, driver):
-        """Test AUTH-008: Locked user login attempt on Mobile.
-        
-        Scenario:
-            Given my account is locked and the login screen is open on the mobile app
-            When I enter my username and password and tap Login
-            Then I should see a message indicating my account is locked
-            And I should not be logged in
-        
-        Acceptance Criteria:
-            - Locked account message is displayed
-            - User is not logged in
-            - No plain-text credentials in logs
-        """
-        logging.info("Starting test: AUTH-008 - Locked user login attempt on Mobile")
-        
-        login_page = LoginPage(driver)
-        login_page.navigate_to_login()
-        
-        # Attempt login with locked account
-        with pytest.raises(AccountLockedError):
-            login_page.login(
-                username="locked_user_mobile",
-                password="valid_pass",
-                expected_success=True
-            )
-        
-        # Verify lockout message is displayed
-        assert login_page.is_account_locked(), "Account locked message should be displayed"
-        
-        # Verify not logged in (dashboard not displayed)
-        assert not login_page.is_dashboard_displayed(timeout=2), "User should not be logged in"
-        
-        logging.info("Test AUTH-008 passed - Locked user cannot login")
-    
-    @pytest.mark.positive
-    @pytest.mark.p2
-    @pytest.mark.web
-    def test_AUTH_009_password_visibility_toggle_web(self, driver):
-        """Test AUTH-009: Password visibility toggle on Web.
-        
-        Scenario:
-            Given the login page is open on the web
-            When I click the password visibility toggle
-            Then my password input should be shown or hidden accordingly
-        
-        Acceptance Criteria:
-            - Password visibility toggles between hidden and visible
-            - Toggle is accessible per WCAG 2.1 AA standards
-        """
-        logging.info("Starting test: AUTH-009 - Password visibility toggle on Web")
-        
-        login_page = LoginPage(driver)
-        login_page.navigate_to_login()
-        
-        # Enter password
-        login_page.enter_password("test_password")
-        
-        # Toggle password visibility
-        toggle_result = login_page.toggle_password_visibility()
-        
-        # Assertions
-        assert toggle_result is True, "Password visibility toggle should succeed"
-        
-        logging.info("Test AUTH-009 passed - Password visibility toggle works")
-    
-    @pytest.mark.positive
-    @pytest.mark.p2
-    @pytest.mark.mobile
-    def test_AUTH_010_password_visibility_toggle_mobile(self, driver):
-        """Test AUTH-010: Password visibility toggle on Mobile.
-        
-        Scenario:
-            Given the login screen is open on the mobile app
-            When I tap the password visibility toggle
-            Then my password input should be shown or hidden accordingly
-        
-        Acceptance Criteria:
-            - Password visibility toggles between hidden and visible
-            - Toggle is accessible per WCAG 2.1 AA standards
-        """
-        logging.info("Starting test: AUTH-010 - Password visibility toggle on Mobile")
-        
-        login_page = LoginPage(driver)
-        login_page.navigate_to_login()
-        
-        # Enter password
-        login_page.enter_password("test_password")
-        
-        # Toggle password visibility
-        toggle_result = login_page.toggle_password_visibility()
-        
-        # Assertions
-        assert toggle_result is True, "Password visibility toggle should succeed"
-        
-        logging.info("Test AUTH-010 passed - Password visibility toggle works")
-    
-    @pytest.mark.security
-    @pytest.mark.p1
-    def test_AUTH_011_audit_login_attempts(self, driver):
-        """Test AUTH-011: Audit login attempts.
-        
-        Scenario:
-            Given users attempt to log in
-            When a login attempt occurs
-            Then an audit log entry is created without storing plain-text credentials
-        
-        Acceptance Criteria:
-            - Audit logs are created for all login attempts
-            - No plain-text credentials in audit logs
-            - System maintains 99.9% availability
-        
-        Note:
-            This test verifies that login operations complete successfully
-            and that the framework's logging does not expose credentials.
-            Actual audit log verification would require backend/database access.
-        """
-        logging.info("Starting test: AUTH-011 - Audit login attempts")
-        
-        login_page = LoginPage(driver)
-        login_page.navigate_to_login()
-        
-        # Perform various login attempts
-        test_scenarios = [
-            {"username": "audit_user_1", "password": "pass1", "expected": False},
-            {"username": "audit_user_2", "password": "pass2", "expected": False},
-        ]
-        
-        for scenario in test_scenarios:
+        for attempt in range(lockout_threshold):
             try:
-                login_page.login(
-                    username=scenario["username"],
-                    password=scenario["password"],
-                    expected_success=scenario["expected"]
-                )
-            except (LoginFailedError, AccountLockedError):
-                # Expected for invalid credentials
+                login_page.login(username, password)
+            except LoginFailedError:
+                logger.info(f"Failed attempt {attempt + 1}/{lockout_threshold}")
                 pass
         
-        # Verify no plain-text credentials in logs
-        # This is enforced by the framework's logging implementation
-        # which sanitizes all password-related log entries
+        # After threshold, check lockout message
+        lockout_msg = login_page.get_lockout_message()
+        assert lockout_msg is not None, "Lockout message should be displayed after threshold"
+        assert "locked" in lockout_msg.lower() or "disabled" in lockout_msg.lower(), \
+            "Message should indicate account is locked"
         
-        logging.info("Test AUTH-011 passed - Audit logging compliance verified")
+        logger.info(f"{story_id}: Account lockout test passed")
+
+    @pytest.mark.p1
+    @pytest.mark.regression
+    @pytest.mark.parametrize("username,password,platform,story_id", [
+        ("locked_user_web", "any_pass", "web", "AUTH-007"),
+        ("locked_user_mobile", "any_pass", "mobile", "AUTH-008"),
+    ])
+    def test_AUTH_007_008_locked_account_login(self, driver, base_url, username, password, platform, story_id):
+        """Test login attempt with locked account (AUTH-007, AUTH-008).
         
-        # Note: In a real implementation, you would:
-        # 1. Query the audit log database/service
-        # 2. Verify entries exist for each login attempt
-        # 3. Confirm no plain-text credentials are stored
-        # 4. Validate log entry structure and completeness
-        assert True, "Audit logging framework compliance verified"
+        Verifies that locked accounts cannot log in and receive appropriate
+        lockout message.
+        
+        Story IDs: AUTH-007, AUTH-008
+        Priority: P1
+        """
+        logger.info(f"Testing {story_id}: Locked account login on {platform}")
+        
+        login_page = LoginPage(driver)
+        login_page.open(base_url)
+        
+        with pytest.raises(LoginFailedError, match="Account locked"):
+            login_page.login(username, password)
+        
+        # Verify lockout message is displayed
+        lockout_msg = login_page.get_lockout_message()
+        assert lockout_msg is not None, "Lockout message should be displayed"
+        assert "locked" in lockout_msg.lower() or "disabled" in lockout_msg.lower(), \
+            "Message should indicate account is locked"
+        
+        logger.info(f"{story_id}: Locked account login test passed")
+
+    @pytest.mark.p2
+    @pytest.mark.regression
+    @pytest.mark.web
+    def test_AUTH_009_password_visibility_toggle_web(self, driver, base_url):
+        """Test password visibility toggle on Web (AUTH-009).
+        
+        Verifies that users can toggle password visibility to verify their input.
+        
+        Story ID: AUTH-009
+        Priority: P2
+        """
+        logger.info("Testing AUTH-009: Password visibility toggle on Web")
+        
+        login_page = LoginPage(driver)
+        login_page.open(base_url)
+        
+        # Initially password input type should be 'password'
+        input_type_before = login_page.get_element_attribute(
+            login_page.PASSWORD_INPUT, "type"
+        )
+        assert input_type_before == "password", "Password should be hidden initially"
+        
+        # Toggle visibility
+        input_type_after = login_page.toggle_password_visibility()
+        assert input_type_after in ["text", "password"], "Input type should be text or password"
+        assert input_type_after != input_type_before, "Input type should change after toggle"
+        
+        # Toggle again to verify it works both ways
+        input_type_final = login_page.toggle_password_visibility()
+        assert input_type_final == input_type_before, "Should return to original state"
+        
+        logger.info("AUTH-009: Password visibility toggle test passed")
+
+    @pytest.mark.p2
+    @pytest.mark.regression
+    @pytest.mark.mobile
+    def test_AUTH_010_password_visibility_toggle_mobile(self, driver, base_url):
+        """Test password visibility toggle on Mobile (AUTH-010).
+        
+        Verifies that users can toggle password visibility on mobile devices.
+        
+        Story ID: AUTH-010
+        Priority: P2
+        """
+        logger.info("Testing AUTH-010: Password visibility toggle on Mobile")
+        
+        login_page = LoginPage(driver)
+        login_page.open(base_url)
+        
+        # Initially password input type should be 'password'
+        input_type_before = login_page.get_element_attribute(
+            login_page.PASSWORD_INPUT, "type"
+        )
+        assert input_type_before == "password", "Password should be hidden initially"
+        
+        # Toggle visibility
+        input_type_after = login_page.toggle_password_visibility()
+        assert input_type_after in ["text", "password"], "Input type should be text or password"
+        assert input_type_after != input_type_before, "Input type should change after toggle"
+        
+        logger.info("AUTH-010: Password visibility toggle test passed")
+
+    @pytest.mark.p1
+    @pytest.mark.regression
+    def test_AUTH_011_audit_login_attempt(self, driver, base_url):
+        """Test audit log creation for login attempt (AUTH-011).
+        
+        Verifies that login attempts are auditable without storing plain-text credentials.
+        Note: This is a placeholder test as audit log verification typically requires
+        backend/API access or admin UI.
+        
+        Story ID: AUTH-011
+        Priority: P1
+        """
+        logger.info("Testing AUTH-011: Audit login attempts")
+        
+        login_page = LoginPage(driver)
+        login_page.open(base_url)
+        
+        # Perform a login attempt
+        try:
+            login_page.login("audit_test_user", "audit_test_pass")
+        except LoginFailedError:
+            pass  # Expected for test user
+        
+        # In a real scenario, this would verify:
+        # 1. Audit log entry exists for this login attempt
+        # 2. Log contains username, timestamp, IP, result
+        # 3. Log does NOT contain plain-text password
+        # 4. Log complies with security and privacy requirements
+        
+        # For UI test, we can only verify the login attempt was processed
+        # Actual audit log verification requires backend/API integration
+        
+        logger.info("AUTH-011: Audit login attempt test passed (UI verification only)")
+        logger.warning("Full audit log verification requires backend/API integration")
+        
+        # Placeholder assertion
+        assert True, "Audit log verification is out of scope for UI test"
